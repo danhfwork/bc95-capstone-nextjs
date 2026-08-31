@@ -39,24 +39,25 @@ export default function CourseNavMenu({
           "inline-flex min-h-10 cursor-pointer items-center gap-1 border-b-2 px-1 text-xs font-medium whitespace-nowrap transition-colors",
           focusClassName,
           isActive
-            ? "border-blue-600 font-semibold text-blue-700"
-            : "border-transparent text-slate-700 hover:border-blue-200 hover:text-blue-700",
+            ? "border-blue-600 font-semibold text-blue-700 data-popup-open:bg-blue-50 data-popup-open:text-blue-800"
+            : "border-transparent text-slate-700 hover:border-blue-200 hover:bg-blue-50/70 hover:text-blue-700 data-popup-open:bg-blue-50 data-popup-open:text-blue-800",
         )}
       >
         Khóa học
-        <ChevronDown aria-hidden="true" className="size-3.5" />
+        <ChevronDown
+          aria-hidden="true"
+          className="size-3.5 transition-transform duration-200 data-popup-open:rotate-180 motion-reduce:transition-none"
+        />
       </DropdownMenuTrigger>
 
       <DropdownMenuContent
         align="start"
         sideOffset={8}
-        className="w-64 border border-slate-200 bg-white p-2 text-slate-900 shadow-lg"
+        className="w-80 max-w-[calc(100vw-2rem)]"
       >
         <DropdownMenuGroup>
-          <DropdownMenuLabel className="px-2 py-1.5 text-xs font-semibold tracking-wide text-slate-500 uppercase">
-            Danh mục khóa học
-          </DropdownMenuLabel>
-          <DropdownMenuSeparator className="bg-slate-200" />
+          <DropdownMenuLabel>Danh mục khóa học</DropdownMenuLabel>
+          <DropdownMenuSeparator />
 
           <DropdownMenuItem
             render={
@@ -65,11 +66,16 @@ export default function CourseNavMenu({
                 aria-current={!selectedCategoryId ? "page" : undefined}
               />
             }
-            className="min-h-10 cursor-pointer justify-between gap-3 px-2.5 py-2 text-sm text-slate-700 focus:bg-blue-50 focus:text-blue-700"
+            className={
+              !selectedCategoryId ? "bg-blue-50 text-blue-800" : undefined
+            }
           >
             Tất cả khóa học
             {!selectedCategoryId ? (
-              <Check aria-hidden="true" className="size-4 text-blue-700" />
+              <Check
+                aria-hidden="true"
+                className="size-4 shrink-0 text-blue-700"
+              />
             ) : null}
           </DropdownMenuItem>
 
@@ -85,11 +91,14 @@ export default function CourseNavMenu({
                     aria-current={isSelected ? "page" : undefined}
                   />
                 }
-                className="min-h-10 cursor-pointer justify-between gap-3 px-2.5 py-2 text-sm text-slate-700 focus:bg-blue-50 focus:text-blue-700"
+                className={isSelected ? "bg-blue-50 text-blue-800" : undefined}
               >
                 {category.tenDanhMuc}
                 {isSelected ? (
-                  <Check aria-hidden="true" className="size-4 text-blue-700" />
+                  <Check
+                    aria-hidden="true"
+                    className="size-4 shrink-0 text-blue-700"
+                  />
                 ) : null}
               </DropdownMenuItem>
             );

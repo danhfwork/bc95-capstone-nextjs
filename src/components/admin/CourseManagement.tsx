@@ -1,15 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  BookOpen,
-  ChevronLeft,
-  ChevronRight,
-  Pencil,
-  Plus,
-  Search,
-  Trash2,
-} from "lucide-react";
+import { BookOpen, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { type FormEvent, useState } from "react";
@@ -17,20 +9,10 @@ import { type FormEvent, useState } from "react";
 import { DEFAULT_GROUP_ID, deleteCourse, getCoursesPaged } from "@/app/lib/api";
 import { getApiErrorMessage } from "@/app/lib/errors";
 import { useAuthStore } from "@/app/store/useAuthStore";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogMedia,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import ConfirmationDialog from "@/components/ui/confirmation-dialog";
 import { Input } from "@/components/ui/input";
+import { PaginationControls } from "@/components/ui/pagination";
 import {
   Table,
   TableBody,
@@ -260,46 +242,29 @@ export default function CourseManagement() {
                         >
                           <Pencil aria-hidden="true" className="size-4" />
                         </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger
-                            render={
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                aria-label={`Xóa ${course.tenKhoaHoc}`}
-                                className="size-10 text-slate-600 hover:bg-red-50 hover:text-red-700"
-                              />
-                            }
-                          >
-                            <Trash2 aria-hidden="true" className="size-4" />
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogMedia className="bg-red-50 text-red-700">
-                                <Trash2 aria-hidden="true" />
-                              </AlertDialogMedia>
-                              <AlertDialogTitle>Xóa khóa học?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                “{course.tenKhoaHoc}” sẽ bị xóa. Thao tác này
-                                không thể hoàn tác.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Hủy</AlertDialogCancel>
-                              <AlertDialogAction
-                                variant="destructive"
-                                disabled={deleteMutation.isPending}
-                                onClick={() =>
-                                  deleteMutation.mutate(course.maKhoaHoc)
-                                }
-                              >
-                                {deleteMutation.isPending
-                                  ? "Đang xóa..."
-                                  : "Xóa khóa học"}
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                        <ConfirmationDialog
+                          trigger={
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              aria-label={`Xóa ${course.tenKhoaHoc}`}
+                              className="size-10 text-slate-600 hover:bg-red-50 hover:text-red-700"
+                            >
+                              <Trash2 aria-hidden="true" className="size-4" />
+                            </Button>
+                          }
+                          icon={Trash2}
+                          title="Xóa khóa học?"
+                          description="Khóa học này sẽ bị xóa khỏi hệ thống. Thao tác này không thể hoàn tác."
+                          itemLabel="Khóa học"
+                          itemName={course.tenKhoaHoc}
+                          actionLabel="Xóa khóa học"
+                          pendingLabel="Đang xóa..."
+                          isPending={deleteMutation.isPending}
+                          onConfirm={() =>
+                            deleteMutation.mutate(course.maKhoaHoc)
+                          }
+                        />
                       </div>
                     ) : (
                       <span className="block text-right text-xs text-slate-500">
@@ -313,39 +278,16 @@ export default function CourseManagement() {
           </Table>
         )}
 
-        <div className="flex items-center justify-between gap-4 border-t border-slate-200 px-4 py-4">
-          <p className="text-sm text-slate-500">
-            Trang {page} / {totalPages}
-          </p>
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              aria-label="Trang trước"
-              disabled={page <= 1 || coursesQuery.isFetching}
-              onClick={() =>
-                setPage((currentPage) => Math.max(currentPage - 1, 1))
-              }
-              className="size-10 border-slate-300"
-            >
-              <ChevronLeft aria-hidden="true" className="size-4" />
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              aria-label="Trang sau"
-              disabled={page >= totalPages || coursesQuery.isFetching}
-              onClick={() =>
-                setPage((currentPage) => Math.min(currentPage + 1, totalPages))
-              }
-              className="size-10 border-slate-300"
-            >
-              <ChevronRight aria-hidden="true" className="size-4" />
-            </Button>
+        {totalPages > 1 ? (
+          <div className="border-t border-slate-200 px-4 py-4">
+            <PaginationControls
+              currentPage={page}
+              totalPages={totalPages}
+              isPending={coursesQuery.isFetching}
+              onPageChange={(nextPage) => setPage(nextPage)}
+            />
           </div>
-        </div>
+        ) : null}
       </section>
     </div>
   );

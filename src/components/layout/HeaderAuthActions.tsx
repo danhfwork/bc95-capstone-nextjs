@@ -99,40 +99,30 @@ export default function HeaderAuthActions() {
           </span>
           <ChevronDown
             aria-hidden="true"
-            className="hidden size-3.5 shrink-0 text-slate-500 lg:block"
+            className="hidden size-3.5 shrink-0 text-slate-500 transition-transform duration-200 data-popup-open:rotate-180 motion-reduce:transition-none lg:block"
           />
         </DropdownMenuTrigger>
 
         <DropdownMenuContent
           align="end"
           sideOffset={8}
-          className="w-56 border border-slate-200 bg-white p-2 text-slate-900 shadow-lg"
+          className="w-64 max-w-[calc(100vw-2rem)]"
         >
-          <DropdownMenuItem
-            render={<Link href="/profile" />}
-            className="min-h-10 cursor-pointer gap-2 px-2.5 py-2 text-sm text-slate-700 focus:bg-blue-50 focus:text-blue-700"
-          >
+          <DropdownMenuItem render={<Link href="/profile" />}>
             <UserRound aria-hidden="true" className="size-4" />
             Hồ sơ
           </DropdownMenuItem>
 
           {isInstructor ? (
-            <DropdownMenuItem
-              render={<Link href="/admin" />}
-              className="min-h-10 cursor-pointer gap-2 px-2.5 py-2 text-sm text-slate-700 focus:bg-blue-50 focus:text-blue-700"
-            >
+            <DropdownMenuItem render={<Link href="/admin" />}>
               <ShieldCheck aria-hidden="true" className="size-4" />
               Trang quản trị
             </DropdownMenuItem>
           ) : null}
 
-          <DropdownMenuSeparator className="bg-slate-200" />
+          <DropdownMenuSeparator />
 
-          <DropdownMenuItem
-            variant="destructive"
-            onClick={handleLogout}
-            className="min-h-10 cursor-pointer gap-2 px-2.5 py-2 text-sm focus:bg-red-50 focus:text-red-700"
-          >
+          <DropdownMenuItem variant="destructive" onClick={handleLogout}>
             <LogOut aria-hidden="true" className="size-4" />
             Đăng xuất
           </DropdownMenuItem>
