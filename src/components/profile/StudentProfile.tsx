@@ -13,6 +13,7 @@ import {
   Mail,
   Phone,
   ShieldCheck,
+  TriangleAlert,
   UserRound,
   UsersRound,
   type LucideIcon,
@@ -39,18 +40,8 @@ import { useAuthStore } from "@/app/store/useAuthStore";
 import CourseImage from "@/components/course/CourseImage";
 import { getCourseImageUrl } from "@/components/course/courseContent";
 import ProfileUpdateDialog from "@/components/profile/ProfileUpdateDialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import ConfirmationDialog from "@/components/ui/confirmation-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 
 type Feedback = {
@@ -194,44 +185,34 @@ function CourseCard({
             </Button>
           )}
 
-          <AlertDialog>
-            <AlertDialogTrigger
-              render={
-                <Button
-                  type="button"
-                  variant="ghost"
-                  disabled={isCancelling || !hasCourseId}
-                  className="h-10 flex-1 text-red-700 hover:bg-red-50 hover:text-red-800 focus-visible:ring-red-600"
-                />
-              }
-            >
-              {isCancelling ? (
-                <LoaderCircle
-                  aria-hidden="true"
-                  className="size-4 animate-spin motion-reduce:animate-none"
-                />
-              ) : null}
-              Hủy đăng ký
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Hủy đăng ký khóa học?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Bạn sẽ được gỡ khỏi “{course.tenKhoaHoc}”. Bạn có chắc muốn
-                  tiếp tục?
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Giữ khóa học</AlertDialogCancel>
-                <AlertDialogAction
-                  variant="destructive"
-                  onClick={() => onCancel(course)}
-                >
-                  Xác nhận hủy
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          <ConfirmationDialog
+            trigger={
+              <Button
+                type="button"
+                variant="ghost"
+                disabled={isCancelling || !hasCourseId}
+                className="h-10 flex-1 text-red-700 hover:bg-red-50 hover:text-red-800 focus-visible:ring-red-600"
+              >
+                {isCancelling ? (
+                  <LoaderCircle
+                    aria-hidden="true"
+                    className="size-4 animate-spin motion-reduce:animate-none"
+                  />
+                ) : null}
+                Hủy đăng ký
+              </Button>
+            }
+            icon={TriangleAlert}
+            itemIcon={BookOpen}
+            title="Hủy đăng ký khóa học?"
+            description="Bạn sắp hủy đăng ký khóa học này. Bạn có chắc muốn tiếp tục?"
+            itemLabel="Khóa học sẽ được gỡ khỏi danh sách của bạn"
+            itemName={course.tenKhoaHoc}
+            actionLabel="Xác nhận hủy"
+            pendingLabel="Đang hủy..."
+            isPending={isCancelling}
+            onConfirm={() => void onCancel(course)}
+          />
         </div>
       </div>
     </article>

@@ -1,15 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Pencil,
-  Plus,
-  Search,
-  Trash2,
-  UsersRound,
-} from "lucide-react";
+import { Pencil, Plus, Search, Trash2, UsersRound } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { FormEvent, useState } from "react";
@@ -17,20 +9,10 @@ import { FormEvent, useState } from "react";
 import { DEFAULT_GROUP_ID, deleteUser, getUsersPaged } from "@/app/lib/api";
 import { getApiErrorMessage } from "@/app/lib/errors";
 import { useAuthStore } from "@/app/store/useAuthStore";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogMedia,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import ConfirmationDialog from "@/components/ui/confirmation-dialog";
 import { Input } from "@/components/ui/input";
+import { PaginationControls } from "@/components/ui/pagination";
 import {
   Table,
   TableBody,
@@ -271,46 +253,27 @@ export default function UserManagement() {
                       >
                         <Pencil aria-hidden="true" className="size-4" />
                       </Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger
-                          render={
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              aria-label={`Xóa ${user.hoTen}`}
-                              className="size-10 text-slate-600 hover:bg-red-50 hover:text-red-700"
-                            />
-                          }
-                        >
-                          <Trash2 aria-hidden="true" className="size-4" />
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogMedia className="bg-red-50 text-red-700">
-                              <Trash2 aria-hidden="true" />
-                            </AlertDialogMedia>
-                            <AlertDialogTitle>Xóa người dùng?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Tài khoản “{user.taiKhoan}” sẽ bị xóa khỏi hệ
-                              thống. Thao tác này không thể hoàn tác.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Hủy</AlertDialogCancel>
-                            <AlertDialogAction
-                              variant="destructive"
-                              disabled={deleteMutation.isPending}
-                              onClick={() =>
-                                deleteMutation.mutate(user.taiKhoan)
-                              }
-                            >
-                              {deleteMutation.isPending
-                                ? "Đang xóa..."
-                                : "Xóa người dùng"}
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                      <ConfirmationDialog
+                        trigger={
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            aria-label={`Xóa ${user.hoTen}`}
+                            className="size-10 text-slate-600 hover:bg-red-50 hover:text-red-700"
+                          >
+                            <Trash2 aria-hidden="true" className="size-4" />
+                          </Button>
+                        }
+                        icon={Trash2}
+                        title="Xóa người dùng?"
+                        description="Tài khoản này sẽ bị xóa khỏi hệ thống. Thao tác này không thể hoàn tác."
+                        itemLabel="Tài khoản"
+                        itemName={user.taiKhoan}
+                        actionLabel="Xóa người dùng"
+                        pendingLabel="Đang xóa..."
+                        isPending={deleteMutation.isPending}
+                        onConfirm={() => deleteMutation.mutate(user.taiKhoan)}
+                      />
                     </div>
                   </TableCell>
                 </TableRow>
@@ -319,39 +282,16 @@ export default function UserManagement() {
           </Table>
         )}
 
-        <div className="flex items-center justify-between gap-4 border-t border-slate-200 px-4 py-4">
-          <p className="text-sm text-slate-500">
-            Trang {page} / {totalPages}
-          </p>
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              aria-label="Trang trước"
-              disabled={page <= 1 || usersQuery.isFetching}
-              onClick={() =>
-                setPage((currentPage) => Math.max(currentPage - 1, 1))
-              }
-              className="size-10 border-slate-300"
-            >
-              <ChevronLeft aria-hidden="true" className="size-4" />
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              aria-label="Trang sau"
-              disabled={page >= totalPages || usersQuery.isFetching}
-              onClick={() =>
-                setPage((currentPage) => Math.min(currentPage + 1, totalPages))
-              }
-              className="size-10 border-slate-300"
-            >
-              <ChevronRight aria-hidden="true" className="size-4" />
-            </Button>
+        {totalPages > 1 ? (
+          <div className="border-t border-slate-200 px-4 py-4">
+            <PaginationControls
+              currentPage={page}
+              totalPages={totalPages}
+              isPending={usersQuery.isFetching}
+              onPageChange={(nextPage) => setPage(nextPage)}
+            />
           </div>
-        </div>
+        ) : null}
       </section>
     </div>
   );
