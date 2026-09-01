@@ -6,9 +6,9 @@ import CourseImage from "@/components/course/CourseImage";
 import {
   getCourseImageUrl,
   getCoursePlainText,
-  getCreatorInitial,
 } from "@/components/course/courseContent";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { getDisplayInitial } from "@/lib/utils";
 
 type CourseCardProps = {
   course: ApiCourse;
@@ -57,7 +57,7 @@ export default function CourseCard({
             aria-hidden="true"
             className="grid size-9 shrink-0 place-items-center rounded-full bg-slate-800 text-xs font-bold text-white"
           >
-            {getCreatorInitial(creatorName)}
+            {getDisplayInitial(creatorName, "C")}
           </span>
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold text-slate-900">

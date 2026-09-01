@@ -1,17 +1,9 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  ArrowRight,
-  Eye,
-  EyeOff,
-  LoaderCircle,
-  LockKeyhole,
-  UserRound,
-} from "lucide-react";
+import { ArrowRight, LoaderCircle, LockKeyhole, UserRound } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { Controller, useForm, type SubmitHandler } from "react-hook-form";
 
 import { signIn } from "@/app/lib/api";
@@ -19,6 +11,10 @@ import { getSignInErrorMessage } from "@/app/lib/errors";
 import { loginSchema, type LoginFormData } from "@/app/lib/schemas";
 import { setSession } from "@/app/lib/session";
 import { useAuthStore } from "@/app/store/useAuthStore";
+import PasswordInput, {
+  authFieldLabelClassName as fieldLabelClassName,
+  authInputClassName as inputClassName,
+} from "@/components/forms/FormControls";
 import { Button } from "@/components/ui/button";
 import {
   Field,
@@ -29,19 +25,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 
-const inputClassName =
-  "h-12 bg-slate-50 pl-11 text-base text-slate-900 placeholder:text-slate-500 focus-visible:border-blue-600 focus-visible:bg-white focus-visible:ring-blue-100 aria-invalid:border-red-500 aria-invalid:ring-red-100 md:text-base";
-
-const fieldLabelClassName =
-  "mb-2 text-sm leading-5 font-semibold text-slate-900";
-
 type LoginFormProps = {
   redirectTo?: string;
 };
 
 export default function LoginForm({ redirectTo = "/" }: LoginFormProps) {
   const router = useRouter();
-  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const setUser = useAuthStore((state) => state.setUser);
 
   const {
@@ -153,43 +142,19 @@ export default function LoginForm({ redirectTo = "/" }: LoginFormProps) {
                 <FieldLabel htmlFor="password" className={fieldLabelClassName}>
                   Mật khẩu
                 </FieldLabel>
-                <div className="relative">
-                  <LockKeyhole
-                    aria-hidden="true"
-                    className="pointer-events-none absolute top-1/2 left-3 z-10 size-5 -translate-y-1/2 text-slate-500"
-                  />
-                  <Input
-                    {...field}
-                    id="password"
-                    type={isPasswordVisible ? "text" : "password"}
-                    autoComplete="current-password"
-                    aria-invalid={fieldState.invalid}
-                    aria-describedby={
-                      fieldState.error ? "password-error" : undefined
-                    }
-                    placeholder="Nhập mật khẩu"
-                    className={`${inputClassName} pr-12`}
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    aria-label={
-                      isPasswordVisible ? "Ẩn mật khẩu" : "Hiện mật khẩu"
-                    }
-                    aria-pressed={isPasswordVisible}
-                    className="absolute inset-y-1 right-1 h-auto w-10 cursor-pointer text-slate-500 hover:bg-slate-100 hover:text-slate-900 focus-visible:border-transparent focus-visible:ring-blue-600"
-                    onClick={() =>
-                      setIsPasswordVisible((isVisible) => !isVisible)
-                    }
-                  >
-                    {isPasswordVisible ? (
-                      <EyeOff aria-hidden="true" className="size-5" />
-                    ) : (
-                      <Eye aria-hidden="true" className="size-5" />
-                    )}
-                  </Button>
-                </div>
+                <PasswordInput
+                  {...field}
+                  id="password"
+                  icon={LockKeyhole}
+                  autoComplete="current-password"
+                  aria-invalid={fieldState.invalid}
+                  aria-describedby={
+                    fieldState.error ? "password-error" : undefined
+                  }
+                  placeholder="Nhập mật khẩu"
+                  className={inputClassName}
+                  toggleClassName="focus-visible:border-transparent focus-visible:ring-blue-600"
+                />
                 <div className="min-h-6 pt-1">
                   <FieldError
                     id="password-error"

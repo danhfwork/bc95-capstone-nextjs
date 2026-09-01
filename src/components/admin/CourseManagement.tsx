@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { BookOpen, Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { BookOpen, Pencil, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { type FormEvent, useState } from "react";
@@ -9,9 +9,15 @@ import { type FormEvent, useState } from "react";
 import { DEFAULT_GROUP_ID, deleteCourse, getCoursesPaged } from "@/app/lib/api";
 import { getApiErrorMessage } from "@/app/lib/errors";
 import { useAuthStore } from "@/app/store/useAuthStore";
+import {
+  AdminCollectionState,
+  AdminPage,
+  AdminPageHeader,
+  AdminSearchForm,
+} from "@/components/admin/AdminPage";
 import { Button } from "@/components/ui/button";
 import ConfirmationDialog from "@/components/ui/confirmation-dialog";
-import { Input } from "@/components/ui/input";
+import FeedbackAlert from "@/components/ui/feedback-alert";
 import { PaginationControls } from "@/components/ui/pagination";
 import {
   Table,
@@ -70,121 +76,66 @@ export default function CourseManagement() {
   const totalPages = Math.max(coursesQuery.data?.totalPages ?? 1, 1);
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-950">
-            Quản lý khóa học
-          </h1>
-        </div>
-        <Button
-          render={<Link href="/admin/courses/new" />}
-          nativeButton={false}
-          className="min-h-11 bg-blue-600 text-white hover:bg-blue-700"
-        >
-          <Plus aria-hidden="true" className="size-4" />
-          Thêm khóa học
-        </Button>
-      </div>
+    <AdminPage>
+      <AdminPageHeader
+        title="Quản lý khóa học"
+        action={
+          <Button
+            render={<Link href="/admin/courses/new" />}
+            nativeButton={false}
+            className="min-h-11 bg-blue-600 text-white hover:bg-blue-700"
+          >
+            <Plus aria-hidden="true" className="size-4" />
+            Thêm khóa học
+          </Button>
+        }
+      />
 
       {status === "created" || status === "updated" ? (
-        <div
-          role="status"
-          className="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800"
-        >
+        <FeedbackAlert type="success" className="mt-6">
           {status === "created"
             ? "Đã tạo khóa học thành công."
             : "Đã cập nhật khóa học thành công."}
-        </div>
+        </FeedbackAlert>
       ) : null}
       {mutationSuccess ? (
-        <div
-          role="status"
-          className="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800"
-        >
+        <FeedbackAlert type="success" className="mt-6">
           {mutationSuccess}
-        </div>
+        </FeedbackAlert>
       ) : null}
       {mutationError ? (
-        <div
-          role="alert"
-          className="mt-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800"
-        >
+        <FeedbackAlert type="error" className="mt-6">
           {mutationError}
-        </div>
+        </FeedbackAlert>
       ) : null}
 
       <section className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="flex flex-col gap-4 border-b border-slate-200 p-4 sm:flex-row sm:items-center sm:justify-between">
-          <form
+          <AdminSearchForm
             onSubmit={handleSearch}
-            role="search"
-            className="flex w-full max-w-lg gap-2"
-          >
-            <div className="relative flex-1">
-              <Search
-                aria-hidden="true"
-                className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400"
-              />
-              <Input
-                value={searchInput}
-                onChange={(event) => setSearchInput(event.target.value)}
-                aria-label="Tìm khóa học"
-                placeholder="Tìm theo tên khóa học"
-                className="h-11 border-slate-300 bg-slate-50 pl-9 text-base focus-visible:border-blue-600 focus-visible:ring-blue-100 md:text-sm"
-              />
-            </div>
-            <Button
-              type="submit"
-              variant="outline"
-              className="min-h-11 border-slate-300 px-4"
-            >
-              Tìm kiếm
-            </Button>
-          </form>
+            value={searchInput}
+            onChange={setSearchInput}
+            ariaLabel="Tìm khóa học"
+            placeholder="Tìm theo tên khóa học"
+            buttonVariant="outline"
+            className="max-w-lg"
+          />
           <p className="text-sm whitespace-nowrap text-slate-500">
             {coursesQuery.data?.totalCount?.toLocaleString("vi-VN") ?? 0} khóa
             học
           </p>
         </div>
 
-        {coursesQuery.isPending ? (
-          <div className="grid min-h-72 place-items-center text-sm text-slate-500">
-            Đang tải danh sách...
-          </div>
-        ) : coursesQuery.isError ? (
-          <div
-            role="alert"
-            className="grid min-h-72 place-items-center p-6 text-center text-sm text-red-700"
-          >
-            <div>
-              <p>Không thể tải danh sách khóa học. Vui lòng thử lại.</p>
-              <Button
-                type="button"
-                variant="outline"
-                className="mt-4"
-                onClick={() => void coursesQuery.refetch()}
-              >
-                Thử lại
-              </Button>
-            </div>
-          </div>
-        ) : courses.length === 0 ? (
-          <div className="grid min-h-72 place-items-center p-6 text-center">
-            <div>
-              <BookOpen
-                aria-hidden="true"
-                className="mx-auto size-10 text-slate-300"
-              />
-              <p className="mt-3 font-semibold text-slate-800">
-                Không có khóa học phù hợp
-              </p>
-              <p className="mt-1 text-sm text-slate-500">
-                Thử thay đổi từ khóa tìm kiếm.
-              </p>
-            </div>
-          </div>
-        ) : (
+        <AdminCollectionState
+          isPending={coursesQuery.isPending}
+          isError={coursesQuery.isError}
+          isEmpty={courses.length === 0}
+          errorMessage="Không thể tải danh sách khóa học. Vui lòng thử lại."
+          emptyIcon={BookOpen}
+          emptyTitle="Không có khóa học phù hợp"
+          emptyDescription="Thử thay đổi từ khóa tìm kiếm."
+          onRetry={() => void coursesQuery.refetch()}
+        >
           <Table>
             <TableHeader className="bg-slate-50">
               <TableRow>
@@ -276,7 +227,7 @@ export default function CourseManagement() {
               ))}
             </TableBody>
           </Table>
-        )}
+        </AdminCollectionState>
 
         {totalPages > 1 ? (
           <div className="border-t border-slate-200 px-4 py-4">
@@ -289,6 +240,6 @@ export default function CourseManagement() {
           </div>
         ) : null}
       </section>
-    </div>
+    </AdminPage>
   );
 }

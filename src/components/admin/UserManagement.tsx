@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Pencil, Plus, Search, Trash2, UsersRound } from "lucide-react";
+import { Pencil, Plus, Trash2, UsersRound } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { FormEvent, useState } from "react";
@@ -9,9 +9,15 @@ import { FormEvent, useState } from "react";
 import { DEFAULT_GROUP_ID, deleteUser, getUsersPaged } from "@/app/lib/api";
 import { getApiErrorMessage } from "@/app/lib/errors";
 import { useAuthStore } from "@/app/store/useAuthStore";
+import {
+  AdminCollectionState,
+  AdminPage,
+  AdminPageHeader,
+  AdminSearchForm,
+} from "@/components/admin/AdminPage";
 import { Button } from "@/components/ui/button";
 import ConfirmationDialog from "@/components/ui/confirmation-dialog";
-import { Input } from "@/components/ui/input";
+import FeedbackAlert from "@/components/ui/feedback-alert";
 import { PaginationControls } from "@/components/ui/pagination";
 import {
   Table,
@@ -70,121 +76,66 @@ export default function UserManagement() {
   const totalPages = Math.max(usersQuery.data?.totalPages ?? 1, 1);
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-950">
-            Quản lý người dùng
-          </h1>
-        </div>
-        <Button
-          render={<Link href="/admin/users/new" />}
-          nativeButton={false}
-          className="min-h-11 bg-blue-600 text-white hover:bg-blue-700"
-        >
-          <Plus aria-hidden="true" className="size-4" />
-          Thêm người dùng
-        </Button>
-      </div>
+    <AdminPage>
+      <AdminPageHeader
+        title="Quản lý người dùng"
+        action={
+          <Button
+            render={<Link href="/admin/users/new" />}
+            nativeButton={false}
+            className="min-h-11 bg-blue-600 text-white hover:bg-blue-700"
+          >
+            <Plus aria-hidden="true" className="size-4" />
+            Thêm người dùng
+          </Button>
+        }
+      />
 
       {status === "created" || status === "updated" ? (
-        <div
-          role="status"
-          className="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800"
-        >
+        <FeedbackAlert type="success" className="mt-6">
           {status === "created"
             ? "Đã tạo người dùng thành công."
             : "Đã cập nhật người dùng thành công."}
-        </div>
+        </FeedbackAlert>
       ) : null}
       {mutationSuccess ? (
-        <div
-          role="status"
-          className="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800"
-        >
+        <FeedbackAlert type="success" className="mt-6">
           {mutationSuccess}
-        </div>
+        </FeedbackAlert>
       ) : null}
       {mutationError ? (
-        <div
-          role="alert"
-          className="mt-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800"
-        >
+        <FeedbackAlert type="error" className="mt-6">
           {mutationError}
-        </div>
+        </FeedbackAlert>
       ) : null}
 
       <section className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="flex flex-col gap-4 border-b border-slate-200 p-4 sm:flex-row sm:items-center sm:justify-between">
-          <form
+          <AdminSearchForm
             onSubmit={handleSearch}
-            role="search"
-            className="flex w-full max-w-lg gap-2"
-          >
-            <div className="relative flex-1">
-              <Search
-                aria-hidden="true"
-                className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400"
-              />
-              <Input
-                value={searchInput}
-                onChange={(event) => setSearchInput(event.target.value)}
-                aria-label="Tìm người dùng"
-                placeholder="Tìm theo tài khoản hoặc họ tên"
-                className="h-11 border-slate-300 bg-slate-50 pl-9 text-base focus-visible:border-blue-600 focus-visible:ring-blue-100 md:text-sm"
-              />
-            </div>
-            <Button
-              type="submit"
-              variant="outline"
-              className="min-h-11 border-slate-300 px-4"
-            >
-              Tìm kiếm
-            </Button>
-          </form>
+            value={searchInput}
+            onChange={setSearchInput}
+            ariaLabel="Tìm người dùng"
+            placeholder="Tìm theo tài khoản hoặc họ tên"
+            buttonVariant="outline"
+            className="max-w-lg"
+          />
           <p className="text-sm whitespace-nowrap text-slate-500">
             {usersQuery.data?.totalCount?.toLocaleString("vi-VN") ?? 0} người
             dùng
           </p>
         </div>
 
-        {usersQuery.isPending ? (
-          <div className="grid min-h-72 place-items-center text-sm text-slate-500">
-            Đang tải danh sách...
-          </div>
-        ) : usersQuery.isError ? (
-          <div
-            role="alert"
-            className="grid min-h-72 place-items-center p-6 text-center text-sm text-red-700"
-          >
-            <div>
-              <p>Không thể tải danh sách người dùng. Vui lòng thử lại.</p>
-              <Button
-                type="button"
-                variant="outline"
-                className="mt-4"
-                onClick={() => void usersQuery.refetch()}
-              >
-                Thử lại
-              </Button>
-            </div>
-          </div>
-        ) : users.length === 0 ? (
-          <div className="grid min-h-72 place-items-center p-6 text-center">
-            <div>
-              <UsersRound
-                aria-hidden="true"
-                className="mx-auto size-10 text-slate-300"
-              />
-              <p className="mt-3 font-semibold text-slate-800">
-                Không có người dùng phù hợp
-              </p>
-              <p className="mt-1 text-sm text-slate-500">
-                Thử thay đổi từ khóa tìm kiếm.
-              </p>
-            </div>
-          </div>
-        ) : (
+        <AdminCollectionState
+          isPending={usersQuery.isPending}
+          isError={usersQuery.isError}
+          isEmpty={users.length === 0}
+          errorMessage="Không thể tải danh sách người dùng. Vui lòng thử lại."
+          emptyIcon={UsersRound}
+          emptyTitle="Không có người dùng phù hợp"
+          emptyDescription="Thử thay đổi từ khóa tìm kiếm."
+          onRetry={() => void usersQuery.refetch()}
+        >
           <Table>
             <TableHeader className="bg-slate-50">
               <TableRow>
@@ -280,7 +231,7 @@ export default function UserManagement() {
               ))}
             </TableBody>
           </Table>
-        )}
+        </AdminCollectionState>
 
         {totalPages > 1 ? (
           <div className="border-t border-slate-200 px-4 py-4">
@@ -293,6 +244,6 @@ export default function UserManagement() {
           </div>
         ) : null}
       </section>
-    </div>
+    </AdminPage>
   );
 }

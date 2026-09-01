@@ -4,8 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   ArrowRight,
   Contact,
-  Eye,
-  EyeOff,
   KeyRound,
   LoaderCircle,
   LockKeyhole,
@@ -15,12 +13,15 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { Controller, useForm, type SubmitHandler } from "react-hook-form";
 
 import { DEFAULT_GROUP_ID, signUp } from "@/app/lib/api";
 import { getSignUpErrorMessage } from "@/app/lib/errors";
 import { registerSchema, type RegisterFormData } from "@/app/lib/schemas";
+import PasswordInput, {
+  authFieldLabelClassName as fieldLabelClassName,
+  authInputClassName as inputClassName,
+} from "@/components/forms/FormControls";
 import { Button } from "@/components/ui/button";
 import {
   Field,
@@ -31,18 +32,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 
-const inputClassName =
-  "h-12 bg-slate-50 pl-11 text-base text-slate-900 placeholder:text-slate-500 focus-visible:border-blue-600 focus-visible:bg-white focus-visible:ring-blue-100 aria-invalid:border-red-500 aria-invalid:ring-red-100 md:text-base";
-
-const fieldLabelClassName =
-  "mb-2 text-sm leading-5 font-semibold text-slate-900";
-
 export default function RegisterForm() {
   const router = useRouter();
-  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-  const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] =
-    useState(false);
-
   const {
     control,
     handleSubmit,
@@ -207,44 +198,20 @@ export default function RegisterForm() {
                   >
                     Mật khẩu
                   </FieldLabel>
-                  <div className="relative">
-                    <LockKeyhole
-                      aria-hidden="true"
-                      className="pointer-events-none absolute top-1/2 left-3 z-10 size-5 -translate-y-1/2 text-slate-500"
-                    />
-                    <Input
-                      {...field}
-                      id="register-password"
-                      type={isPasswordVisible ? "text" : "password"}
-                      required
-                      autoComplete="new-password"
-                      aria-invalid={fieldState.invalid}
-                      aria-describedby={
-                        fieldState.error ? "register-password-error" : undefined
-                      }
-                      placeholder="Nhập mật khẩu"
-                      className={`${inputClassName} pr-12`}
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      aria-label={
-                        isPasswordVisible ? "Ẩn mật khẩu" : "Hiện mật khẩu"
-                      }
-                      aria-pressed={isPasswordVisible}
-                      className="absolute inset-y-1 right-1 h-auto w-10 cursor-pointer text-slate-500 hover:bg-slate-100 hover:text-slate-900 focus-visible:border-transparent focus-visible:ring-blue-600"
-                      onClick={() =>
-                        setIsPasswordVisible((isVisible) => !isVisible)
-                      }
-                    >
-                      {isPasswordVisible ? (
-                        <EyeOff aria-hidden="true" className="size-5" />
-                      ) : (
-                        <Eye aria-hidden="true" className="size-5" />
-                      )}
-                    </Button>
-                  </div>
+                  <PasswordInput
+                    {...field}
+                    id="register-password"
+                    icon={LockKeyhole}
+                    required
+                    autoComplete="new-password"
+                    aria-invalid={fieldState.invalid}
+                    aria-describedby={
+                      fieldState.error ? "register-password-error" : undefined
+                    }
+                    placeholder="Nhập mật khẩu"
+                    className={inputClassName}
+                    toggleClassName="focus-visible:border-transparent focus-visible:ring-blue-600"
+                  />
                   <div className="min-h-6 pt-1">
                     <FieldError
                       id="register-password-error"
@@ -267,48 +234,24 @@ export default function RegisterForm() {
                   >
                     Xác nhận mật khẩu
                   </FieldLabel>
-                  <div className="relative">
-                    <KeyRound
-                      aria-hidden="true"
-                      className="pointer-events-none absolute top-1/2 left-3 z-10 size-5 -translate-y-1/2 text-slate-500"
-                    />
-                    <Input
-                      {...field}
-                      id="register-confirm-password"
-                      type={isConfirmPasswordVisible ? "text" : "password"}
-                      required
-                      autoComplete="new-password"
-                      aria-invalid={fieldState.invalid}
-                      aria-describedby={
-                        fieldState.error
-                          ? "register-confirm-password-error"
-                          : undefined
-                      }
-                      placeholder="Nhập lại mật khẩu"
-                      className={`${inputClassName} pr-12`}
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      aria-label={
-                        isConfirmPasswordVisible
-                          ? "Ẩn mật khẩu xác nhận"
-                          : "Hiện mật khẩu xác nhận"
-                      }
-                      aria-pressed={isConfirmPasswordVisible}
-                      className="absolute inset-y-1 right-1 h-auto w-10 cursor-pointer text-slate-500 hover:bg-slate-100 hover:text-slate-900 focus-visible:border-transparent focus-visible:ring-blue-600"
-                      onClick={() =>
-                        setIsConfirmPasswordVisible((isVisible) => !isVisible)
-                      }
-                    >
-                      {isConfirmPasswordVisible ? (
-                        <EyeOff aria-hidden="true" className="size-5" />
-                      ) : (
-                        <Eye aria-hidden="true" className="size-5" />
-                      )}
-                    </Button>
-                  </div>
+                  <PasswordInput
+                    {...field}
+                    id="register-confirm-password"
+                    icon={KeyRound}
+                    required
+                    autoComplete="new-password"
+                    aria-invalid={fieldState.invalid}
+                    aria-describedby={
+                      fieldState.error
+                        ? "register-confirm-password-error"
+                        : undefined
+                    }
+                    placeholder="Nhập lại mật khẩu"
+                    className={inputClassName}
+                    hidePasswordLabel="Ẩn mật khẩu xác nhận"
+                    showPasswordLabel="Hiện mật khẩu xác nhận"
+                    toggleClassName="focus-visible:border-transparent focus-visible:ring-blue-600"
+                  />
                   <div className="min-h-6 pt-1">
                     <FieldError
                       id="register-confirm-password-error"

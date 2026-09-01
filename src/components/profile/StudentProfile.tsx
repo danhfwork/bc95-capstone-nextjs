@@ -39,10 +39,13 @@ import { clearSession } from "@/app/lib/session";
 import { useAuthStore } from "@/app/store/useAuthStore";
 import CourseImage from "@/components/course/CourseImage";
 import { getCourseImageUrl } from "@/components/course/courseContent";
+import { CenteredStatePanel } from "@/components/layout/PublicSiteShell";
+import ProfileLoading from "@/components/profile/ProfileLoading";
 import ProfileUpdateDialog from "@/components/profile/ProfileUpdateDialog";
 import { Button } from "@/components/ui/button";
 import ConfirmationDialog from "@/components/ui/confirmation-dialog";
-import { Skeleton } from "@/components/ui/skeleton";
+import FeedbackAlert from "@/components/ui/feedback-alert";
+import { getDisplayInitial } from "@/lib/utils";
 
 type Feedback = {
   message: string;
@@ -54,10 +57,6 @@ type AccountFieldProps = {
   label: string;
   value: string;
 };
-
-function getUserInitial(displayName: string): string {
-  return Array.from(displayName.trim())[0]?.toLocaleUpperCase("vi-VN") ?? "H";
-}
 
 function AccountField({ icon: Icon, label, value }: AccountFieldProps) {
   return (
@@ -73,53 +72,25 @@ function AccountField({ icon: Icon, label, value }: AccountFieldProps) {
   );
 }
 
-function ProfileLoading() {
-  return (
-    <main id="main-content" className="flex-1 bg-slate-50" aria-busy="true">
-      <div className="bg-blue-700">
-        <div className="mx-auto flex max-w-7xl items-center gap-5 px-4 py-10 sm:px-6 lg:px-8">
-          <Skeleton className="size-24 shrink-0 rounded-2xl bg-blue-300" />
-          <div className="w-full max-w-sm space-y-3">
-            <Skeleton className="h-8 w-full bg-blue-300" />
-            <Skeleton className="h-5 w-2/3 bg-blue-300" />
-          </div>
-        </div>
-      </div>
-      <div className="mx-auto grid max-w-7xl gap-6 px-4 py-8 sm:px-6 lg:grid-cols-4 lg:px-8">
-        <Skeleton className="h-40 rounded-xl bg-slate-200" />
-        <Skeleton className="h-96 rounded-xl bg-slate-200 lg:col-span-3" />
-      </div>
-    </main>
-  );
-}
-
 function SignInRequired() {
   return (
-    <main
-      id="main-content"
-      className="grid flex-1 place-items-center bg-slate-50 px-4 py-16"
-    >
-      <section className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm sm:p-8">
-        <UserRound
-          aria-hidden="true"
-          className="mx-auto size-12 text-blue-700"
-        />
-        <h1 className="mt-4 text-2xl font-bold text-slate-950">
-          Đăng nhập để xem hồ sơ
-        </h1>
-        <p className="mt-2 text-sm leading-6 text-slate-600">
-          Thông tin học viên và các khóa học đã đăng ký chỉ hiển thị cho chủ tài
-          khoản.
-        </p>
-        <Button
-          render={<Link href="/login" />}
-          nativeButton={false}
-          className="mt-6 h-11 bg-blue-700 px-5 text-white hover:bg-blue-800 focus-visible:ring-blue-600"
-        >
-          Đăng nhập
-        </Button>
-      </section>
-    </main>
+    <CenteredStatePanel>
+      <UserRound aria-hidden="true" className="mx-auto size-12 text-blue-700" />
+      <h1 className="mt-4 text-2xl font-bold text-slate-950">
+        Đăng nhập để xem hồ sơ
+      </h1>
+      <p className="mt-2 text-sm leading-6 text-slate-600">
+        Thông tin học viên và các khóa học đã đăng ký chỉ hiển thị cho chủ tài
+        khoản.
+      </p>
+      <Button
+        render={<Link href="/login" />}
+        nativeButton={false}
+        className="mt-6 h-11 bg-blue-700 px-5 text-white hover:bg-blue-800 focus-visible:ring-blue-600"
+      >
+        Đăng nhập
+      </Button>
+    </CenteredStatePanel>
   );
 }
 
@@ -347,29 +318,21 @@ export default function StudentProfile() {
 
   if (!account || loadError) {
     return (
-      <main
-        id="main-content"
-        className="grid flex-1 place-items-center bg-slate-50 px-4 py-16"
-      >
-        <section
-          role="alert"
-          className="w-full max-w-lg rounded-2xl border border-red-200 bg-white p-6 text-center shadow-sm sm:p-8"
+      <CenteredStatePanel role="alert" className="border-red-200">
+        <h1 className="text-2xl font-bold text-slate-950">
+          Chưa thể tải hồ sơ
+        </h1>
+        <p className="mt-2 text-sm leading-6 text-slate-600">
+          {loadError ?? "Dữ liệu tài khoản chưa sẵn sàng."}
+        </p>
+        <Button
+          type="button"
+          className="mt-6 h-11 bg-blue-700 px-5 text-white hover:bg-blue-800 focus-visible:ring-blue-600"
+          onClick={() => void loadAccount()}
         >
-          <h1 className="text-2xl font-bold text-slate-950">
-            Chưa thể tải hồ sơ
-          </h1>
-          <p className="mt-2 text-sm leading-6 text-slate-600">
-            {loadError ?? "Dữ liệu tài khoản chưa sẵn sàng."}
-          </p>
-          <Button
-            type="button"
-            className="mt-6 h-11 bg-blue-700 px-5 text-white hover:bg-blue-800 focus-visible:ring-blue-600"
-            onClick={() => void loadAccount()}
-          >
-            Thử lại
-          </Button>
-        </section>
-      </main>
+          Thử lại
+        </Button>
+      </CenteredStatePanel>
     );
   }
 
@@ -391,7 +354,7 @@ export default function StudentProfile() {
             aria-hidden="true"
             className="grid size-24 shrink-0 place-items-center rounded-2xl border-4 border-white bg-blue-100 text-4xl font-bold text-blue-700 shadow-md"
           >
-            {getUserInitial(displayName)}
+            {getDisplayInitial(displayName, "H")}
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold text-blue-100">
@@ -515,19 +478,15 @@ export default function StudentProfile() {
 
             <div className="min-h-8 py-2" aria-live="polite" aria-atomic="true">
               {feedback ? (
-                <p
-                  role={feedback.type === "error" ? "alert" : "status"}
-                  className={
-                    feedback.type === "error"
-                      ? "rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
-                      : "flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700"
-                  }
+                <FeedbackAlert
+                  type={feedback.type}
+                  className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm"
                 >
                   {feedback.type === "success" ? (
                     <CheckCircle2 aria-hidden="true" className="size-4" />
                   ) : null}
                   {feedback.message}
-                </p>
+                </FeedbackAlert>
               ) : null}
             </div>
 
