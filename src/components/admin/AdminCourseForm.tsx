@@ -3,8 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { ArrowLeft, ImageUp, LoaderCircle, Save, Upload } from "lucide-react";
-import Link from "next/link";
+import { ImageUp, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
@@ -24,7 +23,7 @@ import {
 } from "@/app/lib/api";
 import { getApiErrorMessage } from "@/app/lib/errors";
 import { useAuthStore } from "@/app/store/useAuthStore";
-import { Button } from "@/components/ui/button";
+import FeedbackAlert from "@/components/ui/feedback-alert";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -41,6 +40,14 @@ import {
   adminCourseSchema,
   type AdminCourseFormData,
 } from "./adminSchemas";
+import {
+  AdminFormActions,
+  AdminFormFieldError as FieldError,
+  AdminFormLoading,
+  adminInputClassName as inputClassName,
+  adminLabelClassName,
+  adminSelectClassName,
+} from "./AdminForm";
 
 type AdminCourseFormProps = {
   courseId?: string;
@@ -50,9 +57,6 @@ type CourseSaveVariables = {
   payload: ApiCoursePayload;
   imageFile: File;
 };
-
-const inputClassName =
-  "h-12 border-slate-300 bg-slate-50 text-base text-slate-950 placeholder:text-slate-400 focus-visible:border-blue-600 focus-visible:bg-white focus-visible:ring-blue-100 aria-invalid:border-red-500 aria-invalid:ring-red-100 md:text-sm";
 
 function createAlias(value: string): string {
   return value
@@ -64,18 +68,6 @@ function createAlias(value: string): string {
     .trim()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
-}
-
-function FieldError({ id, message }: { id: string; message?: string }) {
-  return (
-    <p
-      id={id}
-      role={message ? "alert" : undefined}
-      className="min-h-5 pt-1 text-xs leading-4 text-red-700"
-    >
-      {message}
-    </p>
-  );
 }
 
 export default function AdminCourseForm({ courseId }: AdminCourseFormProps) {
@@ -231,27 +223,14 @@ export default function AdminCourseForm({ courseId }: AdminCourseFormProps) {
   };
 
   if ((courseQuery.isPending && isEditing) || categoriesQuery.isPending) {
-    return (
-      <div className="grid min-h-80 place-items-center rounded-2xl border border-slate-200 bg-white">
-        <div className="flex items-center gap-2 text-sm text-slate-600">
-          <LoaderCircle
-            aria-hidden="true"
-            className="size-5 animate-spin motion-reduce:animate-none"
-          />
-          Đang tải dữ liệu khóa học...
-        </div>
-      </div>
-    );
+    return <AdminFormLoading message="Đang tải dữ liệu khóa học..." />;
   }
 
   if (categoriesQuery.isError || (isEditing && courseQuery.isError)) {
     return (
-      <div
-        role="alert"
-        className="rounded-2xl border border-red-200 bg-red-50 p-6 text-red-800"
-      >
+      <FeedbackAlert type="error" className="rounded-2xl p-6">
         Không thể tải thông tin khóa học. Vui lòng quay lại và thử lại.
-      </div>
+      </FeedbackAlert>
     );
   }
 
@@ -263,22 +242,19 @@ export default function AdminCourseForm({ courseId }: AdminCourseFormProps) {
       className="rounded-2xl border border-slate-200 bg-white shadow-sm"
     >
       {errors.root?.message ? (
-        <div
+        <FeedbackAlert
+          type="error"
           id="course-form-server-error"
           tabIndex={-1}
-          role="alert"
-          className="m-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800 outline-none focus:ring-2 focus:ring-red-600"
+          className="m-6 outline-none focus:ring-2 focus:ring-red-600"
         >
           {errors.root.message}
-        </div>
+        </FeedbackAlert>
       ) : null}
 
       <div className="grid gap-x-6 px-6 py-7 md:grid-cols-2 md:px-8">
         <div>
-          <Label
-            htmlFor="courseId"
-            className="mb-2 text-sm font-semibold text-slate-900"
-          >
+          <Label htmlFor="courseId" className={adminLabelClassName}>
             Mã khóa học <span className="text-red-600">*</span>
           </Label>
           <Input
@@ -300,10 +276,7 @@ export default function AdminCourseForm({ courseId }: AdminCourseFormProps) {
           <FieldError id="courseId-error" message={errors.courseId?.message} />
         </div>
         <div>
-          <Label
-            htmlFor="courseName"
-            className="mb-2 text-sm font-semibold text-slate-900"
-          >
+          <Label htmlFor="courseName" className={adminLabelClassName}>
             Tên khóa học <span className="text-red-600">*</span>
           </Label>
           <Input
@@ -322,10 +295,7 @@ export default function AdminCourseForm({ courseId }: AdminCourseFormProps) {
           />
         </div>
         <div>
-          <Label
-            htmlFor="categoryId"
-            className="mb-2 text-sm font-semibold text-slate-900"
-          >
+          <Label htmlFor="categoryId" className={adminLabelClassName}>
             Danh mục <span className="text-red-600">*</span>
           </Label>
           <Controller
@@ -339,7 +309,7 @@ export default function AdminCourseForm({ courseId }: AdminCourseFormProps) {
                   aria-describedby={
                     errors.categoryId ? "categoryId-error" : undefined
                   }
-                  className="h-12 w-full border-slate-300 bg-slate-50 px-3 text-base focus-visible:border-blue-600 focus-visible:ring-blue-100 aria-invalid:border-red-500 aria-invalid:ring-red-100 md:text-sm"
+                  className={adminSelectClassName}
                 >
                   <SelectValue placeholder="Chọn danh mục" />
                 </SelectTrigger>
@@ -362,10 +332,7 @@ export default function AdminCourseForm({ courseId }: AdminCourseFormProps) {
           />
         </div>
         <div>
-          <Label
-            htmlFor="groupId"
-            className="mb-2 text-sm font-semibold text-slate-900"
-          >
+          <Label htmlFor="groupId" className={adminLabelClassName}>
             Mã nhóm <span className="text-red-600">*</span>
           </Label>
           <Input
@@ -380,10 +347,7 @@ export default function AdminCourseForm({ courseId }: AdminCourseFormProps) {
           <FieldError id="groupId-error" message={errors.groupId?.message} />
         </div>
         <div className="md:col-span-2">
-          <Label
-            htmlFor="imageFile"
-            className="mb-2 text-sm font-semibold text-slate-900"
-          >
+          <Label htmlFor="imageFile" className={adminLabelClassName}>
             Hình ảnh khóa học <span className="text-red-600">*</span>
           </Label>
           <label
@@ -411,10 +375,7 @@ export default function AdminCourseForm({ courseId }: AdminCourseFormProps) {
           ) : null}
         </div>
         <div className="md:col-span-2">
-          <Label
-            htmlFor="description"
-            className="mb-2 text-sm font-semibold text-slate-900"
-          >
+          <Label htmlFor="description" className={adminLabelClassName}>
             Mô tả <span className="text-red-600">*</span>
           </Label>
           <Textarea
@@ -435,32 +396,11 @@ export default function AdminCourseForm({ courseId }: AdminCourseFormProps) {
         </div>
       </div>
 
-      <div className="flex flex-col-reverse gap-3 border-t border-slate-200 px-6 py-5 sm:flex-row sm:justify-end md:px-8">
-        <Button
-          render={<Link href="/admin/courses" />}
-          nativeButton={false}
-          variant="ghost"
-          className="min-h-11 text-slate-700"
-        >
-          <ArrowLeft aria-hidden="true" className="size-4" />
-          Hủy
-        </Button>
-        <Button
-          type="submit"
-          disabled={saveMutation.isPending}
-          className="min-h-11 bg-blue-600 px-5 text-white shadow-sm hover:bg-blue-700"
-        >
-          {saveMutation.isPending ? (
-            <LoaderCircle
-              aria-hidden="true"
-              className="size-4 animate-spin motion-reduce:animate-none"
-            />
-          ) : (
-            <Save aria-hidden="true" className="size-4" />
-          )}
-          {saveMutation.isPending ? "Đang lưu..." : "Lưu khóa học"}
-        </Button>
-      </div>
+      <AdminFormActions
+        cancelHref="/admin/courses"
+        isPending={saveMutation.isPending}
+        saveLabel="Lưu khóa học"
+      />
     </form>
   );
 }

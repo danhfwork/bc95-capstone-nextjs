@@ -1,5 +1,34 @@
 const API_IMAGE_HOST = "elearningnew.cybersoft.edu.vn";
 
+type CatalogHrefOptions = {
+  categoryId?: string;
+  page?: number;
+  searchQuery?: string;
+};
+
+export function getCatalogHref({
+  categoryId,
+  page = 1,
+  searchQuery,
+}: CatalogHrefOptions): string {
+  const params = new URLSearchParams();
+
+  if (categoryId) {
+    params.set("category", categoryId);
+  }
+
+  if (searchQuery) {
+    params.set("q", searchQuery);
+  }
+
+  if (page > 1) {
+    params.set("page", page.toString());
+  }
+
+  const queryString = params.toString();
+  return queryString ? `/?${queryString}` : "/";
+}
+
 export function getCourseImageUrl(imageUrl: string): string | null {
   try {
     const parsedUrl = new URL(imageUrl);
@@ -11,10 +40,6 @@ export function getCourseImageUrl(imageUrl: string): string | null {
   } catch {
     return null;
   }
-}
-
-export function getCreatorInitial(creatorName: string): string {
-  return Array.from(creatorName.trim())[0]?.toLocaleUpperCase("vi-VN") ?? "C";
 }
 
 export function getCoursePlainText(value: string): string {

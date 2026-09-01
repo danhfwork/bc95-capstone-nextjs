@@ -2,10 +2,9 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Eye, EyeOff, LoaderCircle, Save } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Controller, useForm, type SubmitHandler } from "react-hook-form";
 
 import {
@@ -17,7 +16,9 @@ import {
 } from "@/app/lib/api";
 import { getApiErrorMessage } from "@/app/lib/errors";
 import { useAuthStore } from "@/app/store/useAuthStore";
+import PasswordInput from "@/components/forms/FormControls";
 import { Button } from "@/components/ui/button";
+import FeedbackAlert from "@/components/ui/feedback-alert";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -29,29 +30,21 @@ import {
 } from "@/components/ui/select";
 
 import { adminUserSchema, type AdminUserFormData } from "./adminSchemas";
+import {
+  AdminFormActions,
+  AdminFormFieldError as FieldError,
+  AdminFormLoading,
+  adminInputClassName as inputClassName,
+  adminLabelClassName,
+  adminSelectClassName,
+} from "./AdminForm";
 
 type AdminUserFormProps = {
   username?: string;
 };
 
-const inputClassName =
-  "h-12 border-slate-300 bg-slate-50 text-base text-slate-950 placeholder:text-slate-400 focus-visible:border-blue-600 focus-visible:bg-white focus-visible:ring-blue-100 aria-invalid:border-red-500 aria-invalid:ring-red-100 md:text-sm";
-
-function FieldError({ id, message }: { id: string; message?: string }) {
-  return (
-    <p
-      id={id}
-      role={message ? "alert" : undefined}
-      className="min-h-5 pt-1 text-xs leading-4 text-red-700"
-    >
-      {message}
-    </p>
-  );
-}
-
 export default function AdminUserForm({ username }: AdminUserFormProps) {
   const router = useRouter();
-  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const currentUser = useAuthStore((state) => state.user);
   const isEditing = Boolean(username);
   const existingUserQuery = useQuery({
@@ -146,25 +139,12 @@ export default function AdminUserForm({ username }: AdminUserFormProps) {
   };
 
   if (existingUserQuery.isPending && isEditing) {
-    return (
-      <div className="grid min-h-80 place-items-center rounded-2xl border border-slate-200 bg-white">
-        <div className="flex items-center gap-2 text-sm text-slate-600">
-          <LoaderCircle
-            aria-hidden="true"
-            className="size-5 animate-spin motion-reduce:animate-none"
-          />
-          Đang tải thông tin người dùng...
-        </div>
-      </div>
-    );
+    return <AdminFormLoading message="Đang tải thông tin người dùng..." />;
   }
 
   if (isEditing && (existingUserQuery.isError || !existingUserQuery.data)) {
     return (
-      <div
-        role="alert"
-        className="rounded-2xl border border-red-200 bg-red-50 p-6 text-red-800"
-      >
+      <FeedbackAlert type="error" className="rounded-2xl p-6">
         <h2 className="font-bold">Không tìm thấy người dùng</h2>
         <p className="mt-1 text-sm">
           Tài khoản này không tồn tại hoặc không thuộc nhóm {DEFAULT_GROUP_ID}.
@@ -177,7 +157,7 @@ export default function AdminUserForm({ username }: AdminUserFormProps) {
         >
           Quay lại danh sách
         </Button>
-      </div>
+      </FeedbackAlert>
     );
   }
 
@@ -189,22 +169,19 @@ export default function AdminUserForm({ username }: AdminUserFormProps) {
       className="rounded-2xl border border-slate-200 bg-white shadow-sm"
     >
       {errors.root?.message ? (
-        <div
+        <FeedbackAlert
+          type="error"
           id="user-form-server-error"
           tabIndex={-1}
-          role="alert"
-          className="m-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800 outline-none focus:ring-2 focus:ring-red-600"
+          className="m-6 outline-none focus:ring-2 focus:ring-red-600"
         >
           {errors.root.message}
-        </div>
+        </FeedbackAlert>
       ) : null}
 
       <div className="grid gap-x-6 px-6 py-7 md:grid-cols-2 md:px-8">
         <div>
-          <Label
-            htmlFor="account"
-            className="mb-2 text-sm font-semibold text-slate-900"
-          >
+          <Label htmlFor="account" className={adminLabelClassName}>
             Tài khoản <span className="text-red-600">*</span>
           </Label>
           <Input
@@ -221,48 +198,24 @@ export default function AdminUserForm({ username }: AdminUserFormProps) {
         </div>
 
         <div>
-          <Label
-            htmlFor="password"
-            className="mb-2 text-sm font-semibold text-slate-900"
-          >
+          <Label htmlFor="password" className={adminLabelClassName}>
             {isEditing ? "Mật khẩu mới" : "Mật khẩu"}{" "}
             <span className="text-red-600">*</span>
           </Label>
-          <div className="relative">
-            <Input
-              id="password"
-              type={isPasswordVisible ? "text" : "password"}
-              autoComplete="new-password"
-              aria-invalid={Boolean(errors.password)}
-              aria-describedby={errors.password ? "password-error" : undefined}
-              placeholder="Tối thiểu 6 ký tự"
-              className={`${inputClassName} pr-12`}
-              {...register("password")}
-            />
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              aria-label={isPasswordVisible ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-              aria-pressed={isPasswordVisible}
-              onClick={() => setIsPasswordVisible((isVisible) => !isVisible)}
-              className="absolute inset-y-1 right-1 h-auto w-10 text-slate-500 hover:bg-slate-100"
-            >
-              {isPasswordVisible ? (
-                <EyeOff aria-hidden="true" className="size-5" />
-              ) : (
-                <Eye aria-hidden="true" className="size-5" />
-              )}
-            </Button>
-          </div>
+          <PasswordInput
+            id="password"
+            autoComplete="new-password"
+            aria-invalid={Boolean(errors.password)}
+            aria-describedby={errors.password ? "password-error" : undefined}
+            placeholder="Tối thiểu 6 ký tự"
+            className={inputClassName}
+            {...register("password")}
+          />
           <FieldError id="password-error" message={errors.password?.message} />
         </div>
 
         <div>
-          <Label
-            htmlFor="fullName"
-            className="mb-2 text-sm font-semibold text-slate-900"
-          >
+          <Label htmlFor="fullName" className={adminLabelClassName}>
             Họ tên <span className="text-red-600">*</span>
           </Label>
           <Input
@@ -278,10 +231,7 @@ export default function AdminUserForm({ username }: AdminUserFormProps) {
         </div>
 
         <div>
-          <Label
-            htmlFor="email"
-            className="mb-2 text-sm font-semibold text-slate-900"
-          >
+          <Label htmlFor="email" className={adminLabelClassName}>
             Email <span className="text-red-600">*</span>
           </Label>
           <Input
@@ -298,10 +248,7 @@ export default function AdminUserForm({ username }: AdminUserFormProps) {
         </div>
 
         <div>
-          <Label
-            htmlFor="phone"
-            className="mb-2 text-sm font-semibold text-slate-900"
-          >
+          <Label htmlFor="phone" className={adminLabelClassName}>
             Số điện thoại <span className="text-red-600">*</span>
           </Label>
           <Input
@@ -318,10 +265,7 @@ export default function AdminUserForm({ username }: AdminUserFormProps) {
         </div>
 
         <div>
-          <Label
-            htmlFor="groupId"
-            className="mb-2 text-sm font-semibold text-slate-900"
-          >
+          <Label htmlFor="groupId" className={adminLabelClassName}>
             Mã nhóm <span className="text-red-600">*</span>
           </Label>
           <Input
@@ -337,10 +281,7 @@ export default function AdminUserForm({ username }: AdminUserFormProps) {
         </div>
 
         <div className="md:col-span-2">
-          <Label
-            htmlFor="role"
-            className="mb-2 text-sm font-semibold text-slate-900"
-          >
+          <Label htmlFor="role" className={adminLabelClassName}>
             Loại người dùng <span className="text-red-600">*</span>
           </Label>
           <Controller
@@ -352,7 +293,7 @@ export default function AdminUserForm({ username }: AdminUserFormProps) {
                   id="role"
                   aria-invalid={Boolean(errors.role)}
                   aria-describedby={errors.role ? "role-error" : undefined}
-                  className="h-12 w-full border-slate-300 bg-slate-50 px-3 text-base focus-visible:border-blue-600 focus-visible:ring-blue-100 aria-invalid:border-red-500 aria-invalid:ring-red-100 md:text-sm"
+                  className={adminSelectClassName}
                 >
                   <SelectValue />
                 </SelectTrigger>
@@ -367,32 +308,11 @@ export default function AdminUserForm({ username }: AdminUserFormProps) {
         </div>
       </div>
 
-      <div className="flex flex-col-reverse gap-3 border-t border-slate-200 px-6 py-5 sm:flex-row sm:justify-end md:px-8">
-        <Button
-          render={<Link href="/admin/users" />}
-          nativeButton={false}
-          variant="ghost"
-          className="min-h-11 text-slate-700"
-        >
-          <ArrowLeft aria-hidden="true" className="size-4" />
-          Hủy
-        </Button>
-        <Button
-          type="submit"
-          disabled={saveMutation.isPending}
-          className="min-h-11 bg-blue-600 px-5 text-white shadow-sm hover:bg-blue-700"
-        >
-          {saveMutation.isPending ? (
-            <LoaderCircle
-              aria-hidden="true"
-              className="size-4 animate-spin motion-reduce:animate-none"
-            />
-          ) : (
-            <Save aria-hidden="true" className="size-4" />
-          )}
-          {saveMutation.isPending ? "Đang lưu..." : "Lưu thông tin"}
-        </Button>
-      </div>
+      <AdminFormActions
+        cancelHref="/admin/users"
+        isPending={saveMutation.isPending}
+        saveLabel="Lưu thông tin"
+      />
     </form>
   );
 }

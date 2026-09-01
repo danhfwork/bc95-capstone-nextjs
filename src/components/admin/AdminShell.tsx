@@ -11,11 +11,8 @@ import {
   UsersRound,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { usePathname } from "next/navigation";
 
-import { clearSession, getSession } from "@/app/lib/session";
-import { useAuthStore } from "@/app/store/useAuthStore";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -26,7 +23,8 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { cn } from "@/lib/utils";
+import { useAuthSession } from "@/hooks/useAuthSession";
+import { cn, getDisplayInitial } from "@/lib/utils";
 
 const NAVIGATION = [
   { href: "/admin/users", label: "Quản lý người dùng", icon: UsersRound },
@@ -122,23 +120,7 @@ export default function AdminShell({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   const pathname = usePathname();
-  const router = useRouter();
-  const user = useAuthStore((state) => state.user);
-  const isHydrated = useAuthStore((state) => state.isHydrated);
-  const setUser = useAuthStore((state) => state.setUser);
-  const clearUser = useAuthStore((state) => state.clearUser);
-
-  useEffect(() => {
-    if (!isHydrated) {
-      setUser(getSession());
-    }
-  }, [isHydrated, setUser]);
-
-  const handleLogout = () => {
-    clearSession();
-    clearUser();
-    router.replace("/login");
-  };
+  const { isHydrated, logout, user } = useAuthSession();
 
   if (!isHydrated) {
     return (
@@ -221,7 +203,7 @@ export default function AdminShell({
               variant="ghost"
               size="sm"
               className="min-h-10 text-slate-600 hover:bg-red-50 hover:text-red-700"
-              onClick={handleLogout}
+              onClick={logout}
             >
               <LogOut aria-hidden="true" className="size-4" />
               Thoát
@@ -267,7 +249,7 @@ export default function AdminShell({
             aria-hidden="true"
             className="grid size-9 shrink-0 place-items-center rounded-full bg-blue-100 text-sm font-bold text-blue-700"
           >
-            {Array.from(displayName)[0]?.toLocaleUpperCase("vi-VN") ?? "G"}
+            {getDisplayInitial(displayName, "G")}
           </span>
           <span className="hidden min-w-0 sm:block">
             <span className="block max-w-40 truncate text-sm font-semibold">

@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 
 import { getCourseCategories } from "@/app/lib/api";
-import Footer from "@/components/layout/Footer";
-import Header from "@/components/layout/Header";
+import PublicSiteShell from "@/components/layout/PublicSiteShell";
 import StudentProfile from "@/components/profile/StudentProfile";
 
 export const metadata: Metadata = {
@@ -15,10 +14,8 @@ export default async function ProfilePage() {
   const categories = await getCourseCategories().catch(() => []);
 
   return (
-    <>
-      <Header activeItem={null} categories={categories} />
+    <PublicSiteShell headerProps={{ activeItem: null, categories }}>
       <StudentProfile />
-      <Footer />
-    </>
+    </PublicSiteShell>
   );
 }

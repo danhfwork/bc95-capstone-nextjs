@@ -5,9 +5,10 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import CourseCard from "@/components/course/CourseCard";
-import CoursePagination from "@/components/course/CoursePagination";
-import Footer from "@/components/layout/Footer";
-import Header from "@/components/layout/Header";
+import { getCatalogHref } from "@/components/course/courseContent";
+import PublicSiteShell, {
+  Breadcrumbs,
+} from "@/components/layout/PublicSiteShell";
 import {
   getCourseCategories,
   getCoursesByCategory,
@@ -17,6 +18,7 @@ import {
   type ApiPaginatedResponse,
 } from "@/app/lib/api";
 import { Button } from "@/components/ui/button";
+import { PaginationControls } from "@/components/ui/pagination";
 
 const PAGE_SIZE = 8;
 
@@ -59,35 +61,6 @@ function parsePageNumber(value: string | string[] | undefined): {
 
 function isNoResultsError(error: unknown): boolean {
   return isAxiosError(error) && error.response?.status === 404;
-}
-
-type CatalogHrefOptions = {
-  categoryId?: string;
-  page?: number;
-  searchQuery?: string;
-};
-
-function getCatalogHref({
-  categoryId,
-  page = 1,
-  searchQuery,
-}: CatalogHrefOptions): string {
-  const params = new URLSearchParams();
-
-  if (categoryId) {
-    params.set("category", categoryId);
-  }
-
-  if (searchQuery) {
-    params.set("q", searchQuery);
-  }
-
-  if (page > 1) {
-    params.set("page", page.toString());
-  }
-
-  const queryString = params.toString();
-  return queryString ? `/?${queryString}` : "/";
 }
 
 function paginateCourses(
@@ -204,35 +177,21 @@ export default async function Home({ searchParams }: HomePageProps) {
   const clearSearchHref = getCatalogHref({ categoryId });
 
   return (
-    <>
-      <Header
-        activeItem="courses"
-        categories={categories}
-        searchQuery={searchQuery}
-        selectedCategoryId={categoryId || undefined}
-      />
-
+    <PublicSiteShell
+      headerProps={{
+        activeItem: "courses",
+        categories,
+        searchQuery,
+        selectedCategoryId: categoryId || undefined,
+      }}
+    >
       <main id="main-content" className="flex-1 bg-slate-50">
         <section className="border-b border-slate-200 bg-white">
           <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
-            <nav aria-label="Đường dẫn trang" className="mb-4">
-              <ol className="flex flex-wrap items-center gap-2 text-sm text-slate-600">
-                <li>
-                  <Link
-                    href="/"
-                    className="rounded-sm hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
-                  >
-                    Trang chủ
-                  </Link>
-                </li>
-                <li aria-hidden="true" className="text-slate-400">
-                  /
-                </li>
-                <li aria-current="page" className="font-medium text-blue-700">
-                  Khóa học
-                </li>
-              </ol>
-            </nav>
+            <Breadcrumbs
+              className="mb-4"
+              items={[{ href: "/", label: "Trang chủ" }, { label: "Khóa học" }]}
+            />
 
             <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
               <div>
@@ -368,18 +327,22 @@ export default async function Home({ searchParams }: HomePageProps) {
                 ))}
               </div>
 
-              <CoursePagination
-                categoryId={categoryId || undefined}
+              <PaginationControls
+                className="mt-10 sm:mt-12"
                 currentPage={coursesPage.currentPage}
                 totalPages={coursesPage.totalPages}
-                searchQuery={searchQuery}
+                getPageHref={(page) =>
+                  getCatalogHref({
+                    categoryId: categoryId || undefined,
+                    page,
+                    searchQuery,
+                  })
+                }
               />
             </>
           )}
         </section>
       </main>
-
-      <Footer />
-    </>
+    </PublicSiteShell>
   );
 }

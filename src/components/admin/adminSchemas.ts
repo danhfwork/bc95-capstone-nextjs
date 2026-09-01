@@ -1,18 +1,18 @@
 import { z } from "zod";
 
-const phoneSchema = z
-  .string()
-  .trim()
-  .min(1, "Vui lòng nhập số điện thoại.")
-  .regex(/^(?:\+84|0)(?:\s?\d){9}$/, {
-    message: "Số điện thoại phải bắt đầu bằng 0 hoặc +84 và gồm 10 chữ số.",
-  });
+import {
+  accountSchema,
+  emailSchema,
+  fullNameSchema,
+  passwordSchema,
+  phoneSchema,
+} from "@/app/lib/schemas";
 
 export const adminUserSchema = z.object({
-  account: z.string().trim().min(3, "Tài khoản phải có ít nhất 3 ký tự."),
-  password: z.string().min(6, "Mật khẩu phải có ít nhất 6 ký tự."),
-  fullName: z.string().trim().min(2, "Họ tên phải có ít nhất 2 ký tự."),
-  email: z.string().trim().email("Email chưa đúng định dạng."),
+  account: accountSchema,
+  password: passwordSchema,
+  fullName: fullNameSchema,
+  email: emailSchema,
   phone: phoneSchema,
   groupId: z
     .string()

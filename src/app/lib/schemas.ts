@@ -1,5 +1,36 @@
 import { z } from "zod";
 
+export const accountSchema = z
+  .string()
+  .trim()
+  .min(1, { message: "Vui lòng nhập tên tài khoản." })
+  .min(3, { message: "Tên tài khoản phải có ít nhất 3 ký tự." });
+
+export const fullNameSchema = z
+  .string()
+  .trim()
+  .min(1, { message: "Vui lòng nhập họ và tên." })
+  .min(2, { message: "Họ và tên phải có ít nhất 2 ký tự." });
+
+export const passwordSchema = z
+  .string()
+  .min(1, { message: "Vui lòng nhập mật khẩu." })
+  .min(6, { message: "Mật khẩu phải có ít nhất 6 ký tự." });
+
+export const emailSchema = z
+  .string()
+  .trim()
+  .min(1, { message: "Vui lòng nhập email." })
+  .email({ message: "Email chưa đúng định dạng." });
+
+export const phoneSchema = z
+  .string()
+  .trim()
+  .min(1, { message: "Vui lòng nhập số điện thoại." })
+  .regex(/^(?:\+84|0)(?:\s?\d){9}$/, {
+    message: "Số điện thoại phải bắt đầu bằng 0 hoặc +84 và gồm 10 chữ số.",
+  });
+
 export const loginSchema = z.object({
   account: z
     .string()
@@ -16,35 +47,14 @@ export type LoginFormData = z.infer<typeof loginSchema>;
 
 export const registerSchema = z
   .object({
-    account: z
-      .string()
-      .trim()
-      .min(1, { message: "Vui lòng nhập tên tài khoản." })
-      .min(3, { message: "Tên tài khoản phải có ít nhất 3 ký tự." }),
-    fullName: z
-      .string()
-      .trim()
-      .min(1, { message: "Vui lòng nhập họ và tên." })
-      .min(2, { message: "Họ và tên phải có ít nhất 2 ký tự." }),
-    password: z
-      .string()
-      .min(1, { message: "Vui lòng nhập mật khẩu." })
-      .min(6, { message: "Mật khẩu phải có ít nhất 6 ký tự." }),
+    account: accountSchema,
+    fullName: fullNameSchema,
+    password: passwordSchema,
     confirmPassword: z
       .string()
       .min(1, { message: "Vui lòng xác nhận mật khẩu." }),
-    email: z
-      .string()
-      .trim()
-      .min(1, { message: "Vui lòng nhập email." })
-      .email({ message: "Email chưa đúng định dạng." }),
-    phone: z
-      .string()
-      .trim()
-      .min(1, { message: "Vui lòng nhập số điện thoại." })
-      .regex(/^(?:\+84|0)(?:\s?\d){9}$/, {
-        message: "Số điện thoại phải bắt đầu bằng 0 hoặc +84 và gồm 10 chữ số.",
-      }),
+    email: emailSchema,
+    phone: phoneSchema,
   })
   .refine((values) => values.password === values.confirmPassword, {
     message: "Mật khẩu xác nhận chưa trùng khớp.",
@@ -54,23 +64,9 @@ export const registerSchema = z
 export type RegisterFormData = z.infer<typeof registerSchema>;
 
 export const profileSchema = z.object({
-  fullName: z
-    .string()
-    .trim()
-    .min(1, { message: "Vui lòng nhập họ và tên." })
-    .min(2, { message: "Họ và tên phải có ít nhất 2 ký tự." }),
-  email: z
-    .string()
-    .trim()
-    .min(1, { message: "Vui lòng nhập email." })
-    .email({ message: "Email chưa đúng định dạng." }),
-  phone: z
-    .string()
-    .trim()
-    .min(1, { message: "Vui lòng nhập số điện thoại." })
-    .regex(/^(?:\+84|0)(?:\s?\d){9}$/, {
-      message: "Số điện thoại phải bắt đầu bằng 0 hoặc +84 và gồm 10 chữ số.",
-    }),
+  fullName: fullNameSchema,
+  email: emailSchema,
+  phone: phoneSchema,
   password: z
     .string()
     .trim()

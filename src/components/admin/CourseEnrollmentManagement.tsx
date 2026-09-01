@@ -2,11 +2,8 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  ChevronLeft,
-  ChevronRight,
   Clock3,
   GraduationCap,
-  Search,
   UserCheck,
   UserPlus,
   UserRound,
@@ -27,8 +24,12 @@ import {
 import { getApiErrorMessage } from "@/app/lib/errors";
 import { useAuthStore } from "@/app/store/useAuthStore";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { PaginationButtons } from "@/components/ui/pagination";
 
+import { AdminPage, AdminPageHeader, AdminSearchForm } from "./AdminPage";
+import EnrollmentWorkspace, {
+  SelectableEntityCard,
+} from "./EnrollmentWorkspace";
 import EnrollmentStatusSection from "./EnrollmentStatusSection";
 import EnrollmentViewSwitcher from "./EnrollmentViewSwitcher";
 
@@ -147,10 +148,8 @@ export default function CourseEnrollmentManagement() {
     approvedQuery.isPending;
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
-      <h1 className="text-3xl font-bold tracking-tight text-slate-950">
-        Quản lý ghi danh
-      </h1>
+    <AdminPage>
+      <AdminPageHeader title="Quản lý ghi danh" />
       <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
         Chọn một khóa học để quản lý người dùng chưa ghi danh, học viên chờ
         duyệt và danh sách lớp.
@@ -177,31 +176,14 @@ export default function CourseEnrollmentManagement() {
           </p>
         </div>
 
-        <form
+        <AdminSearchForm
           onSubmit={handleSearch}
-          role="search"
-          className="mt-4 flex max-w-2xl gap-2"
-        >
-          <div className="relative flex-1">
-            <Search
-              aria-hidden="true"
-              className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400"
-            />
-            <Input
-              value={searchInput}
-              onChange={(event) => setSearchInput(event.target.value)}
-              aria-label="Tìm khóa học để quản lý ghi danh"
-              placeholder="Nhập tên khóa học"
-              className="h-11 border-slate-300 bg-slate-50 pl-9 text-base focus-visible:border-blue-600 focus-visible:ring-blue-100 md:text-sm"
-            />
-          </div>
-          <Button
-            type="submit"
-            className="min-h-11 bg-blue-600 text-white hover:bg-blue-700"
-          >
-            Tìm kiếm
-          </Button>
-        </form>
+          value={searchInput}
+          onChange={setSearchInput}
+          ariaLabel="Tìm khóa học để quản lý ghi danh"
+          placeholder="Nhập tên khóa học"
+          className="mt-4"
+        />
 
         {coursesQuery.isPending ? (
           <p className="mt-5 text-sm text-slate-500">
@@ -231,24 +213,15 @@ export default function CourseEnrollmentManagement() {
 
               return (
                 <li key={course.maKhoaHoc}>
-                  <button
-                    type="button"
-                    aria-pressed={isSelected}
-                    onClick={() => handleSelectCourse(course)}
-                    className={`flex min-h-16 w-full cursor-pointer items-center gap-3 rounded-xl border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 ${isSelected ? "border-blue-600 bg-blue-50" : "border-slate-200 hover:border-blue-300 hover:bg-slate-50"}`}
-                  >
-                    <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-slate-100 text-slate-600">
-                      <GraduationCap aria-hidden="true" className="size-5" />
-                    </span>
-                    <span className="min-w-0">
-                      <span className="block truncate text-sm font-semibold text-slate-900">
-                        {course.tenKhoaHoc}
-                      </span>
-                      <span className="block truncate font-mono text-xs text-slate-500">
-                        {course.maKhoaHoc}
-                      </span>
-                    </span>
-                  </button>
+                  <SelectableEntityCard
+                    icon={GraduationCap}
+                    iconShape="rounded"
+                    isSelected={isSelected}
+                    onSelect={() => handleSelectCourse(course)}
+                    primaryText={course.tenKhoaHoc}
+                    secondaryText={course.maKhoaHoc}
+                    secondaryClassName="font-mono"
+                  />
                 </li>
               );
             })}
@@ -259,152 +232,88 @@ export default function CourseEnrollmentManagement() {
           <p className="text-sm text-slate-500">
             Trang {page} / {totalPages}
           </p>
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              aria-label="Trang khóa học trước"
-              disabled={page <= 1 || coursesQuery.isFetching}
-              onClick={() => {
-                setPage((currentPage) => Math.max(currentPage - 1, 1));
-                setSelectedCourse(null);
-              }}
-              className="size-10 border-slate-300"
-            >
-              <ChevronLeft aria-hidden="true" className="size-4" />
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              aria-label="Trang khóa học sau"
-              disabled={page >= totalPages || coursesQuery.isFetching}
-              onClick={() => {
-                setPage((currentPage) => Math.min(currentPage + 1, totalPages));
-                setSelectedCourse(null);
-              }}
-              className="size-10 border-slate-300"
-            >
-              <ChevronRight aria-hidden="true" className="size-4" />
-            </Button>
-          </div>
+          <PaginationButtons
+            currentPage={page}
+            totalPages={totalPages}
+            isPending={coursesQuery.isFetching}
+            previousAriaLabel="Trang khóa học trước"
+            nextAriaLabel="Trang khóa học sau"
+            onPageChange={(nextPage) => {
+              setPage(nextPage);
+              setSelectedCourse(null);
+            }}
+          />
         </div>
       </section>
 
-      {selectedCourse ? (
-        <section aria-labelledby="student-status-title" className="mt-6">
-          <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h2
-                id="student-status-title"
-                className="text-xl font-bold text-slate-950"
-              >
-                Trạng thái học viên
-              </h2>
-              <p className="mt-1 text-sm text-slate-600">
-                {selectedCourse.tenKhoaHoc} · {selectedCourse.maKhoaHoc}
-              </p>
-            </div>
-            <span className="w-fit rounded-full bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700">
-              {selectedCourse.maNhom || DEFAULT_GROUP_ID}
-            </span>
-          </div>
-
-          {feedback ? (
-            <div
-              role={feedback.type === "error" ? "alert" : "status"}
-              className={`mb-4 rounded-xl border p-4 text-sm ${feedback.type === "error" ? "border-red-200 bg-red-50 text-red-800" : "border-emerald-200 bg-emerald-50 text-emerald-800"}`}
-            >
-              {feedback.message}
-            </div>
-          ) : null}
-          {hasEnrollmentError ? (
-            <div
-              role="alert"
-              className="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800"
-            >
-              Không thể tải đầy đủ trạng thái học viên. Vui lòng thử lại.
-            </div>
-          ) : null}
-
-          {isLoadingEnrollment ? (
-            <div className="grid min-h-64 place-items-center rounded-2xl border border-slate-200 bg-white text-sm text-slate-500">
-              Đang tải trạng thái học viên...
-            </div>
-          ) : (
-            <div className="grid gap-4 xl:grid-cols-3">
-              <EnrollmentStatusSection
-                key={`${courseId}-unenrolled`}
-                title="Chưa ghi danh"
-                description="Có thể thêm trực tiếp vào lớp"
-                items={unenrolledQuery.data ?? []}
-                emptyMessage="Không còn người dùng chưa ghi danh."
-                actionLabel="Ghi danh"
-                isPending={enrollmentMutation.isPending}
-                icon={UserPlus}
-                itemIcon={UserRound}
-                getItemKey={(student) => student.taiKhoan}
-                getPrimaryText={(student) => student.hoTen}
-                getSecondaryText={(student) => `@${student.taiKhoan}`}
-                onAction={(student) =>
-                  handleAction({ type: "enroll", student })
-                }
-              />
-              <EnrollmentStatusSection
-                key={`${courseId}-pending`}
-                title="Chờ xét duyệt"
-                description="Yêu cầu đăng ký đang chờ"
-                items={pendingQuery.data ?? []}
-                emptyMessage="Không có học viên đang chờ."
-                actionLabel="Duyệt"
-                isPending={enrollmentMutation.isPending}
-                icon={Clock3}
-                itemIcon={UserRound}
-                getItemKey={(student) => student.taiKhoan}
-                getPrimaryText={(student) => student.hoTen}
-                getSecondaryText={(student) => `@${student.taiKhoan}`}
-                onAction={(student) =>
-                  handleAction({ type: "approve", student })
-                }
-              />
-              <EnrollmentStatusSection
-                key={`${courseId}-approved`}
-                title="Danh sách lớp"
-                description="Học viên đã được duyệt"
-                items={approvedQuery.data ?? []}
-                emptyMessage="Khóa học chưa có học viên."
-                actionLabel="Hủy"
-                isDestructive
-                isPending={enrollmentMutation.isPending}
-                icon={UserCheck}
-                itemIcon={UserRound}
-                getItemKey={(student) => student.taiKhoan}
-                getPrimaryText={(student) => student.hoTen}
-                getSecondaryText={(student) => `@${student.taiKhoan}`}
-                onAction={(student) =>
-                  handleAction({ type: "cancel", student })
-                }
-              />
-            </div>
-          )}
-        </section>
-      ) : (
-        <div className="mt-6 grid min-h-64 place-items-center rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-center">
-          <div>
-            <GraduationCap
-              aria-hidden="true"
-              className="mx-auto size-12 text-slate-300"
-            />
-            <p className="mt-3 font-semibold text-slate-800">
-              Chưa chọn khóa học
-            </p>
-            <p className="mt-1 text-sm text-slate-500">
-              Chọn một khóa học để quản lý danh sách học viên.
-            </p>
-          </div>
+      <EnrollmentWorkspace
+        selected={Boolean(selectedCourse)}
+        titleId="student-status-title"
+        title="Trạng thái học viên"
+        summary={
+          selectedCourse
+            ? `${selectedCourse.tenKhoaHoc} · ${selectedCourse.maKhoaHoc}`
+            : ""
+        }
+        badge={selectedCourse?.maNhom || DEFAULT_GROUP_ID}
+        feedback={feedback}
+        hasError={hasEnrollmentError}
+        errorMessage="Không thể tải đầy đủ trạng thái học viên. Vui lòng thử lại."
+        isLoading={isLoadingEnrollment}
+        loadingMessage="Đang tải trạng thái học viên..."
+        emptyIcon={GraduationCap}
+        emptyTitle="Chưa chọn khóa học"
+        emptyDescription="Chọn một khóa học để quản lý danh sách học viên."
+      >
+        <div className="grid gap-4 xl:grid-cols-3">
+          <EnrollmentStatusSection
+            key={`${courseId}-unenrolled`}
+            title="Chưa ghi danh"
+            description="Có thể thêm trực tiếp vào lớp"
+            items={unenrolledQuery.data ?? []}
+            emptyMessage="Không còn người dùng chưa ghi danh."
+            actionLabel="Ghi danh"
+            isPending={enrollmentMutation.isPending}
+            icon={UserPlus}
+            itemIcon={UserRound}
+            getItemKey={(student) => student.taiKhoan}
+            getPrimaryText={(student) => student.hoTen}
+            getSecondaryText={(student) => `@${student.taiKhoan}`}
+            onAction={(student) => handleAction({ type: "enroll", student })}
+          />
+          <EnrollmentStatusSection
+            key={`${courseId}-pending`}
+            title="Chờ xét duyệt"
+            description="Yêu cầu đăng ký đang chờ"
+            items={pendingQuery.data ?? []}
+            emptyMessage="Không có học viên đang chờ."
+            actionLabel="Duyệt"
+            isPending={enrollmentMutation.isPending}
+            icon={Clock3}
+            itemIcon={UserRound}
+            getItemKey={(student) => student.taiKhoan}
+            getPrimaryText={(student) => student.hoTen}
+            getSecondaryText={(student) => `@${student.taiKhoan}`}
+            onAction={(student) => handleAction({ type: "approve", student })}
+          />
+          <EnrollmentStatusSection
+            key={`${courseId}-approved`}
+            title="Danh sách lớp"
+            description="Học viên đã được duyệt"
+            items={approvedQuery.data ?? []}
+            emptyMessage="Khóa học chưa có học viên."
+            actionLabel="Hủy"
+            isDestructive
+            isPending={enrollmentMutation.isPending}
+            icon={UserCheck}
+            itemIcon={UserRound}
+            getItemKey={(student) => student.taiKhoan}
+            getPrimaryText={(student) => student.hoTen}
+            getSecondaryText={(student) => `@${student.taiKhoan}`}
+            onAction={(student) => handleAction({ type: "cancel", student })}
+          />
         </div>
-      )}
-    </div>
+      </EnrollmentWorkspace>
+    </AdminPage>
   );
 }

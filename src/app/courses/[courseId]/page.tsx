@@ -1,11 +1,5 @@
 import { isAxiosError } from "axios";
-import {
-  CalendarDays,
-  ChevronRight,
-  Eye,
-  UserRound,
-  UsersRound,
-} from "lucide-react";
+import { CalendarDays, Eye, UserRound, UsersRound } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -21,12 +15,14 @@ import CourseImage from "@/components/course/CourseImage";
 import {
   getCourseImageUrl,
   getCoursePlainText,
-  getCreatorInitial,
 } from "@/components/course/courseContent";
-import Footer from "@/components/layout/Footer";
-import Header from "@/components/layout/Header";
+import PublicSiteShell, {
+  Breadcrumbs,
+  CenteredStatePanel,
+} from "@/components/layout/PublicSiteShell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { getDisplayInitial } from "@/lib/utils";
 
 type CourseDetailPageProps = {
   params: Promise<{ courseId: string }>;
@@ -85,42 +81,35 @@ function CourseLoadError({
   retryHref: string;
 }) {
   return (
-    <>
-      <Header activeItem="courses" categories={categories} />
-      <main
-        id="main-content"
-        className="grid flex-1 place-items-center bg-slate-50 px-4 py-16"
-      >
-        <section className="w-full max-w-xl rounded-2xl border border-red-200 bg-white p-6 text-center shadow-sm sm:p-8">
-          <h1 className="text-2xl font-bold text-slate-950">
-            Không thể tải khóa học
-          </h1>
-          <p className="mt-3 text-base leading-7 text-slate-600">
-            Hệ thống đang tạm thời không phản hồi. Vui lòng thử lại sau ít phút.
-          </p>
-          <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
-            <Button
-              render={<Link href={retryHref} />}
-              nativeButton={false}
-              size="lg"
-              className="h-11 bg-blue-700 px-5 text-white hover:bg-blue-800 focus-visible:border-blue-700 focus-visible:ring-blue-600"
-            >
-              Thử lại
-            </Button>
-            <Button
-              render={<Link href="/" />}
-              nativeButton={false}
-              variant="outline"
-              size="lg"
-              className="h-11 px-5"
-            >
-              Về danh sách khóa học
-            </Button>
-          </div>
-        </section>
-      </main>
-      <Footer />
-    </>
+    <PublicSiteShell headerProps={{ activeItem: "courses", categories }}>
+      <CenteredStatePanel className="max-w-xl border-red-200">
+        <h1 className="text-2xl font-bold text-slate-950">
+          Không thể tải khóa học
+        </h1>
+        <p className="mt-3 text-base leading-7 text-slate-600">
+          Hệ thống đang tạm thời không phản hồi. Vui lòng thử lại sau ít phút.
+        </p>
+        <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+          <Button
+            render={<Link href={retryHref} />}
+            nativeButton={false}
+            size="lg"
+            className="h-11 bg-blue-700 px-5 text-white hover:bg-blue-800 focus-visible:border-blue-700 focus-visible:ring-blue-600"
+          >
+            Thử lại
+          </Button>
+          <Button
+            render={<Link href="/" />}
+            nativeButton={false}
+            variant="outline"
+            size="lg"
+            className="h-11 px-5"
+          >
+            Về danh sách khóa học
+          </Button>
+        </div>
+      </CenteredStatePanel>
+    </PublicSiteShell>
   );
 }
 
@@ -162,47 +151,23 @@ export default async function CourseDetailPage({
   const imageUrl = getCourseImageUrl(course.hinhAnh);
 
   return (
-    <>
-      <Header
-        activeItem="courses"
-        categories={categories}
-        selectedCategoryId={categoryId}
-      />
-
+    <PublicSiteShell
+      headerProps={{
+        activeItem: "courses",
+        categories,
+        selectedCategoryId: categoryId,
+      }}
+    >
       <main id="main-content" className="flex-1 bg-slate-50">
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
-          <nav aria-label="Đường dẫn trang" className="mb-6">
-            <ol className="flex flex-wrap items-center gap-2 text-sm leading-6 text-slate-600">
-              <li>
-                <Link
-                  href="/"
-                  className="rounded-sm hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
-                >
-                  Trang chủ
-                </Link>
-              </li>
-              <li aria-hidden="true" className="text-slate-400">
-                <ChevronRight className="size-4" />
-              </li>
-              <li>
-                <Link
-                  href={categoryHref}
-                  className="rounded-sm hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
-                >
-                  {categoryName}
-                </Link>
-              </li>
-              <li aria-hidden="true" className="text-slate-400">
-                <ChevronRight className="size-4" />
-              </li>
-              <li
-                aria-current="page"
-                className="min-w-0 break-words font-semibold text-slate-900"
-              >
-                {course.tenKhoaHoc}
-              </li>
-            </ol>
-          </nav>
+          <Breadcrumbs
+            className="mb-6"
+            items={[
+              { href: "/", label: "Trang chủ" },
+              { href: categoryHref, label: categoryName },
+              { label: course.tenKhoaHoc },
+            ]}
+          />
 
           <div className="grid gap-8 lg:grid-cols-3 lg:items-start">
             <article className="min-w-0 lg:col-span-2">
@@ -219,7 +184,7 @@ export default async function CourseDetailPage({
                     aria-hidden="true"
                     className="grid size-11 shrink-0 place-items-center rounded-full bg-slate-800 text-sm font-bold text-white"
                   >
-                    {getCreatorInitial(creatorName)}
+                    {getDisplayInitial(creatorName, "C")}
                   </span>
                   <div className="min-w-0">
                     <dt className="text-xs font-medium text-slate-500">
@@ -327,8 +292,6 @@ export default async function CourseDetailPage({
           </div>
         </div>
       </main>
-
-      <Footer />
-    </>
+    </PublicSiteShell>
   );
 }

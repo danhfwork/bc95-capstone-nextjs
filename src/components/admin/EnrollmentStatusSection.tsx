@@ -1,15 +1,10 @@
 "use client";
 
-import {
-  Check,
-  ChevronLeft,
-  ChevronRight,
-  type LucideIcon,
-  X,
-} from "lucide-react";
+import { Check, type LucideIcon, X } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { PaginationButtons } from "@/components/ui/pagination";
 
 const PAGE_SIZE = 10;
 
@@ -140,30 +135,14 @@ export default function EnrollmentStatusSection<Item>({
               {Math.min(firstItemIndex + PAGE_SIZE, items.length)} /{" "}
               {items.length.toLocaleString("vi-VN")}
             </p>
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                aria-label={`Trang trước của ${title}`}
-                disabled={currentPage <= 1 || isPending}
-                onClick={() => setPage(Math.max(currentPage - 1, 1))}
-                className="size-10 border-slate-300"
-              >
-                <ChevronLeft aria-hidden="true" className="size-4" />
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                aria-label={`Trang sau của ${title}`}
-                disabled={currentPage >= totalPages || isPending}
-                onClick={() => setPage(Math.min(currentPage + 1, totalPages))}
-                className="size-10 border-slate-300"
-              >
-                <ChevronRight aria-hidden="true" className="size-4" />
-              </Button>
-            </div>
+            <PaginationButtons
+              currentPage={currentPage}
+              totalPages={totalPages}
+              isPending={isPending}
+              previousAriaLabel={`Trang trước của ${title}`}
+              nextAriaLabel={`Trang sau của ${title}`}
+              onPageChange={setPage}
+            />
           </div>
         </>
       )}

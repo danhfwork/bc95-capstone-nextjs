@@ -2,11 +2,7 @@
 
 import { ChevronDown, LogOut, ShieldCheck, UserRound } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 
-import { clearSession, getSession } from "@/app/lib/session";
-import { useAuthStore } from "@/app/store/useAuthStore";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -15,31 +11,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-function getUserInitial(displayName: string): string {
-  return Array.from(displayName.trim())[0]?.toLocaleUpperCase("vi-VN") ?? "U";
-}
+import { useAuthSession } from "@/hooks/useAuthSession";
+import { getDisplayInitial } from "@/lib/utils";
 
 export default function HeaderAuthActions() {
-  const router = useRouter();
-  const user = useAuthStore((state) => state.user);
-  const isHydrated = useAuthStore((state) => state.isHydrated);
-  const setUser = useAuthStore((state) => state.setUser);
-  const clearUser = useAuthStore((state) => state.clearUser);
-
-  useEffect(() => {
-    if (isHydrated) {
-      return;
-    }
-
-    setUser(getSession());
-  }, [isHydrated, setUser]);
-
-  const handleLogout = () => {
-    clearSession();
-    clearUser();
-    router.replace("/login");
-  };
+  const { isHydrated, logout, user } = useAuthSession();
 
   if (!isHydrated) {
     return (
@@ -89,7 +65,7 @@ export default function HeaderAuthActions() {
             aria-hidden="true"
             className="grid size-9 shrink-0 place-items-center rounded-full bg-blue-700 text-sm font-bold text-white"
           >
-            {getUserInitial(displayName)}
+            {getDisplayInitial(displayName)}
           </span>
           <span
             aria-hidden="true"
@@ -122,7 +98,7 @@ export default function HeaderAuthActions() {
 
           <DropdownMenuSeparator />
 
-          <DropdownMenuItem variant="destructive" onClick={handleLogout}>
+          <DropdownMenuItem variant="destructive" onClick={logout}>
             <LogOut aria-hidden="true" className="size-4" />
             Đăng xuất
           </DropdownMenuItem>

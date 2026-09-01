@@ -134,6 +134,18 @@ type PaginationControlsProps = {
   totalPages: number;
 };
 
+type PaginationButtonsProps = {
+  className?: string;
+  currentPage: number;
+  getPageHref?: (page: number) => string;
+  isPending?: boolean;
+  nextAriaLabel?: string;
+  onPageChange?: (page: number) => void;
+  previousAriaLabel?: string;
+  summary?: React.ReactNode;
+  totalPages: number;
+};
+
 type PaginationControlButtonProps = {
   ariaLabel: string;
   children: React.ReactNode;
@@ -212,6 +224,51 @@ function PaginationControlButton({
   );
 }
 
+function PaginationButtons({
+  className,
+  currentPage,
+  getPageHref,
+  isPending = false,
+  nextAriaLabel = "Đến trang sau",
+  onPageChange,
+  previousAriaLabel = "Đến trang trước",
+  summary,
+  totalPages,
+}: PaginationButtonsProps) {
+  const previousPage = currentPage - 1;
+  const nextPage = currentPage + 1;
+  const navigationButtonClass =
+    "size-10 cursor-pointer border-slate-300 bg-white text-slate-700 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 focus-visible:ring-blue-600 disabled:cursor-not-allowed";
+
+  return (
+    <div className={cn("flex items-center gap-2", className)}>
+      <PaginationControlButton
+        page={previousPage}
+        href={currentPage > 1 ? getPageHref?.(previousPage) : undefined}
+        onPageChange={onPageChange}
+        disabled={currentPage <= 1}
+        isPending={isPending}
+        ariaLabel={previousAriaLabel}
+        className={navigationButtonClass}
+      >
+        <ChevronLeftIcon aria-hidden="true" className="size-4" />
+      </PaginationControlButton>
+      {summary}
+      <PaginationControlButton
+        page={nextPage}
+        href={currentPage < totalPages ? getPageHref?.(nextPage) : undefined}
+        onPageChange={onPageChange}
+        disabled={currentPage >= totalPages}
+        isPending={isPending}
+        ariaLabel={nextAriaLabel}
+        className={navigationButtonClass}
+      >
+        <ChevronRightIcon aria-hidden="true" className="size-4" />
+      </PaginationControlButton>
+    </div>
+  );
+}
+
 function PaginationControls({
   className,
   currentPage,
@@ -232,33 +289,19 @@ function PaginationControls({
 
   return (
     <Pagination className={className}>
-      <div className="flex items-center justify-center gap-2 sm:hidden">
-        <PaginationControlButton
-          page={previousPage}
-          href={currentPage > 1 ? getPageHref?.(previousPage) : undefined}
-          onPageChange={onPageChange}
-          disabled={currentPage <= 1}
-          isPending={isPending}
-          ariaLabel="Đến trang trước"
-          className={navigationButtonClass}
-        >
-          <ChevronLeftIcon aria-hidden="true" className="size-4" />
-        </PaginationControlButton>
-        <span className="min-w-16 text-center text-sm font-medium tabular-nums text-slate-700">
-          Trang {currentPage}/{totalPages}
-        </span>
-        <PaginationControlButton
-          page={nextPage}
-          href={currentPage < totalPages ? getPageHref?.(nextPage) : undefined}
-          onPageChange={onPageChange}
-          disabled={currentPage >= totalPages}
-          isPending={isPending}
-          ariaLabel="Đến trang sau"
-          className={navigationButtonClass}
-        >
-          <ChevronRightIcon aria-hidden="true" className="size-4" />
-        </PaginationControlButton>
-      </div>
+      <PaginationButtons
+        className="justify-center sm:hidden"
+        currentPage={currentPage}
+        totalPages={totalPages}
+        getPageHref={getPageHref}
+        isPending={isPending}
+        onPageChange={onPageChange}
+        summary={
+          <span className="min-w-16 text-center text-sm font-medium tabular-nums text-slate-700">
+            Trang {currentPage}/{totalPages}
+          </span>
+        }
+      />
 
       <PaginationContent className="hidden gap-1.5 sm:flex">
         <PaginationItem>
@@ -334,6 +377,7 @@ export {
   PaginationItem,
   PaginationLink,
   PaginationNext,
+  PaginationButtons,
   PaginationControls,
   PaginationPrevious,
 };

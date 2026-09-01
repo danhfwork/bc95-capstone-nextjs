@@ -37,6 +37,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
+import FeedbackAlert from "@/components/ui/feedback-alert";
 import { Input } from "@/components/ui/input";
 
 type ProfileUpdateDialogProps = {
@@ -192,13 +193,16 @@ export default function ProfileUpdateDialog({
 
           <div className="min-h-0 space-y-5 overflow-y-auto px-5 py-5 sm:px-6">
             {errors.root?.message ? (
-              <FieldError className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm leading-5 text-red-700">
+              <FeedbackAlert
+                type="error"
+                className="flex items-start gap-2 px-4 py-3 leading-5 text-red-700"
+              >
                 <CircleAlert
                   aria-hidden="true"
                   className="mt-0.5 size-4 shrink-0"
                 />
                 <span>{errors.root.message}</span>
-              </FieldError>
+              </FeedbackAlert>
             ) : null}
 
             <fieldset>
