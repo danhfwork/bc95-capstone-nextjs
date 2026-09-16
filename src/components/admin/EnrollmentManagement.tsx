@@ -38,7 +38,9 @@ type EnrollmentAction = {
 
 export default function EnrollmentManagement() {
   const queryClient = useQueryClient();
-  const accessToken = useAuthStore((state) => state.user?.accessToken);
+  const isAdmin = useAuthStore(
+    (state) => state.user?.maLoaiNguoiDung === "GV",
+  );
   const [searchInput, setSearchInput] = useState("");
   const [keyword, setKeyword] = useState("");
   const [selectedUser, setSelectedUser] = useState<ApiUserSummary | null>(null);
@@ -56,23 +58,23 @@ export default function EnrollmentManagement() {
   const username = selectedUser?.taiKhoan ?? "";
   const unenrolledQuery = useQuery({
     queryKey: ["admin", "enrollment", username, "unenrolled"],
-    queryFn: () => getUnenrolledCoursesForUser(username, accessToken ?? ""),
-    enabled: Boolean(username && accessToken),
+    queryFn: () => getUnenrolledCoursesForUser(username),
+    enabled: Boolean(username && isAdmin),
   });
   const pendingQuery = useQuery({
     queryKey: ["admin", "enrollment", username, "pending"],
-    queryFn: () => getPendingCoursesForUser(username, accessToken ?? ""),
-    enabled: Boolean(username && accessToken),
+    queryFn: () => getPendingCoursesForUser(username),
+    enabled: Boolean(username && isAdmin),
   });
   const approvedQuery = useQuery({
     queryKey: ["admin", "enrollment", username, "approved"],
-    queryFn: () => getApprovedCoursesForUser(username, accessToken ?? ""),
-    enabled: Boolean(username && accessToken),
+    queryFn: () => getApprovedCoursesForUser(username),
+    enabled: Boolean(username && isAdmin),
   });
 
   const enrollmentMutation = useMutation({
     mutationFn: async ({ type, course }: EnrollmentAction) => {
-      if (!accessToken || !selectedUser) {
+      if (!isAdmin || !selectedUser) {
         throw new Error("Missing admin session or selected user");
       }
 
@@ -82,8 +84,8 @@ export default function EnrollmentManagement() {
       };
 
       return type === "cancel"
-        ? cancelCourseRegistration(payload, accessToken)
-        : enrollStudentInCourse(payload, accessToken);
+        ? cancelCourseRegistration(payload)
+        : enrollStudentInCourse(payload);
     },
     onSuccess: (_, action) => {
       const messages = {

@@ -12,7 +12,7 @@ import {
   DEFAULT_GROUP_ID,
   searchUsers,
   updateUser,
-  type ApiUserPayload,
+  type ApiProfileUpdatePayload,
 } from "@/app/lib/api";
 import { getApiErrorMessage } from "@/app/lib/errors";
 import { useAuthStore } from "@/app/store/useAuthStore";
@@ -29,7 +29,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import { adminUserSchema, type AdminUserFormData } from "./adminSchemas";
+import {
+  adminUserEditSchema,
+  adminUserSchema,
+  type AdminUserFormData,
+} from "./adminSchemas";
 import {
   AdminFormActions,
   AdminFormFieldError as FieldError,
@@ -65,7 +69,9 @@ export default function AdminUserForm({ username }: AdminUserFormProps) {
     clearErrors,
     formState: { errors },
   } = useForm<AdminUserFormData>({
-    resolver: zodResolver(adminUserSchema),
+    resolver: zodResolver(
+      isEditing ? adminUserEditSchema : adminUserSchema,
+    ),
     mode: "onBlur",
     defaultValues: {
       account: username ?? "",
@@ -97,14 +103,14 @@ export default function AdminUserForm({ username }: AdminUserFormProps) {
   }, [existingUserQuery.data, reset]);
 
   const saveMutation = useMutation({
-    mutationFn: async (payload: ApiUserPayload) => {
-      if (!currentUser?.accessToken) {
+    mutationFn: async (payload: ApiProfileUpdatePayload) => {
+      if (!currentUser || currentUser.maLoaiNguoiDung !== "GV") {
         throw new Error("Missing admin session");
       }
 
       return isEditing
-        ? updateUser(payload, currentUser.accessToken)
-        : createUser(payload, currentUser.accessToken);
+        ? updateUser(payload)
+        : createUser({ ...payload, matKhau: payload.matKhau ?? "" });
     },
     onSuccess: () => {
       router.push(`/admin/users?status=${isEditing ? "updated" : "created"}`);
@@ -127,15 +133,17 @@ export default function AdminUserForm({ username }: AdminUserFormProps) {
 
   const handleSave: SubmitHandler<AdminUserFormData> = (values) => {
     clearErrors("root");
-    saveMutation.mutate({
+    const payload: ApiProfileUpdatePayload = {
       taiKhoan: values.account,
-      matKhau: values.password,
       hoTen: values.fullName,
       soDT: values.phone.replace(/\s/g, ""),
       maNhom: values.groupId.toLocaleUpperCase("vi-VN"),
       email: values.email,
       maLoaiNguoiDung: values.role,
-    });
+      ...(values.password ? { matKhau: values.password } : {}),
+    };
+
+    saveMutation.mutate(payload);
   };
 
   if (existingUserQuery.isPending && isEditing) {
@@ -199,15 +207,15 @@ export default function AdminUserForm({ username }: AdminUserFormProps) {
 
         <div>
           <Label htmlFor="password" className={adminLabelClassName}>
-            {isEditing ? "Mật khẩu mới" : "Mật khẩu"}{" "}
-            <span className="text-red-600">*</span>
+            {isEditing ? "Mật khẩu mới (không bắt buộc)" : "Mật khẩu"}
+            {!isEditing ? <span className="text-red-600"> *</span> : null}
           </Label>
           <PasswordInput
             id="password"
             autoComplete="new-password"
             aria-invalid={Boolean(errors.password)}
             aria-describedby={errors.password ? "password-error" : undefined}
-            placeholder="Tối thiểu 6 ký tự"
+            placeholder={isEditing ? "Để trống nếu không đổi" : "Tối thiểu 6 ký tự"}
             className={inputClassName}
             {...register("password")}
           />
@@ -266,7 +274,7 @@ export default function AdminUserForm({ username }: AdminUserFormProps) {
 
         <div>
           <Label htmlFor="groupId" className={adminLabelClassName}>
-            Mã nhóm <span className="text-red-600">*</span>
+            Mã nhóm (GP01) <span className="text-red-600">*</span>
           </Label>
           <Input
             id="groupId"

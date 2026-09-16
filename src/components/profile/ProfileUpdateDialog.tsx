@@ -23,7 +23,6 @@ import {
 } from "@/app/lib/api";
 import { getProfileUpdateErrorMessage } from "@/app/lib/errors";
 import { profileSchema, type ProfileFormData } from "@/app/lib/schemas";
-import { updateSessionUser } from "@/app/lib/session";
 import { useAuthStore } from "@/app/store/useAuthStore";
 import { Button } from "@/components/ui/button";
 import {
@@ -42,7 +41,6 @@ import { Input } from "@/components/ui/input";
 
 type ProfileUpdateDialogProps = {
   account: ApiAccount;
-  accessToken: string;
   onUpdated: (account: ApiAccount) => void;
 };
 
@@ -51,7 +49,6 @@ const inputClassName =
 
 export default function ProfileUpdateDialog({
   account,
-  accessToken,
   onUpdated,
 }: ProfileUpdateDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -107,15 +104,10 @@ export default function ProfileUpdateDialog({
           maNhom: account.maNhom ?? DEFAULT_GROUP_ID,
           email: values.email,
         },
-        accessToken,
       );
 
-      const updatedAccount = await getAccountInfo(accessToken);
-      const updatedSession = updateSessionUser(updatedAccount);
-
-      if (updatedSession) {
-        setUser(updatedSession);
-      }
+      const updatedAccount = await getAccountInfo();
+      setUser(updatedAccount);
 
       onUpdated(updatedAccount);
       setIsOpen(false);

@@ -9,7 +9,6 @@ import { Controller, useForm, type SubmitHandler } from "react-hook-form";
 import { signIn } from "@/app/lib/api";
 import { getSignInErrorMessage } from "@/app/lib/errors";
 import { loginSchema, type LoginFormData } from "@/app/lib/schemas";
-import { setSession } from "@/app/lib/session";
 import { useAuthStore } from "@/app/store/useAuthStore";
 import PasswordInput, {
   authFieldLabelClassName as fieldLabelClassName,
@@ -63,7 +62,6 @@ export default function LoginForm({ redirectTo = "/" }: LoginFormProps) {
         matKhau: values.password,
       });
 
-      setSession(signedInUser);
       setUser(signedInUser);
       router.replace(redirectTo);
     } catch (error: unknown) {

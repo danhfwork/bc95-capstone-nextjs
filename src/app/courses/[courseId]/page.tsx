@@ -9,7 +9,7 @@ import {
   getCourseById,
   getCourseCategories,
   type ApiCourseCategory,
-} from "@/app/lib/api";
+} from "@/app/lib/serverApi";
 import CourseEnrollmentButton from "@/components/course/CourseEnrollmentButton";
 import CourseImage from "@/components/course/CourseImage";
 import {

@@ -1,8 +1,13 @@
+import LoadingSpinner from "@/components/ui/loading-spinner";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ProfileLoading() {
   return (
     <main id="main-content" className="flex-1 bg-slate-50" aria-busy="true">
+      <LoadingSpinner
+        label="Đang tải hồ sơ..."
+        className="w-full py-4"
+      />
       <div className="bg-blue-700">
         <div className="mx-auto flex max-w-7xl items-center gap-5 px-4 py-10 sm:px-6 lg:px-8">
           <Skeleton className="size-24 shrink-0 rounded-2xl bg-blue-300" />
