@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { getCourseCategories } from "@/app/lib/api";
+import { getCourseCategories } from "@/app/lib/serverApi";
 import PublicSiteShell from "@/components/layout/PublicSiteShell";
 import StudentProfile from "@/components/profile/StudentProfile";
 

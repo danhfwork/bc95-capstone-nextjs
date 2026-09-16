@@ -1,16 +1,16 @@
 "use client";
 
+import { isAxiosError } from "axios";
 import { CheckCircle2, Clock3, LoaderCircle } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { getAccountInfo, registerCourse } from "@/app/lib/api";
-import { getCourseRegistrationErrorMessage } from "@/app/lib/errors";
 import {
-  clearPendingCourse,
   getPendingCourseIds,
   markCoursePending,
 } from "@/app/lib/session";
+import { getCourseRegistrationErrorMessage } from "@/app/lib/errors";
 import { useAuthStore } from "@/app/store/useAuthStore";
 import { Button } from "@/components/ui/button";
 
@@ -19,7 +19,12 @@ type CourseEnrollmentButtonProps = {
 };
 
 type EnrollmentStatus =
-  "checking" | "guest" | "available" | "pending" | "enrolled";
+  | "checking"
+  | "guest"
+  | "available"
+  | "pending"
+  | "registered"
+  | "unavailable";
 
 export default function CourseEnrollmentButton({
   courseId,
@@ -55,28 +60,48 @@ export default function CourseEnrollmentButton({
       ).includes(courseId);
 
       setStatus(hasLocallyPendingEnrollment ? "pending" : "checking");
+      setFeedback(null);
 
       try {
-        const account = await getAccountInfo(session.accessToken);
+        const account = await getAccountInfo();
 
         if (!isActive) {
           return;
         }
 
-        const isEnrolled = account.chiTietKhoaHocGhiDanh?.some(
+        const isRegisteredOnServer = account.chiTietKhoaHocGhiDanh?.some(
           (course) => course.maKhoaHoc === courseId,
         );
 
-        if (isEnrolled) {
-          clearPendingCourse(session.taiKhoan, courseId);
-          setStatus("enrolled");
+        if (hasLocallyPendingEnrollment) {
+          setStatus("pending");
+        } else if (isRegisteredOnServer) {
+          setStatus("registered");
         } else {
-          setStatus(hasLocallyPendingEnrollment ? "pending" : "available");
+          setStatus("available");
         }
-      } catch {
-        if (isActive) {
-          setStatus(hasLocallyPendingEnrollment ? "pending" : "available");
+      } catch (error: unknown) {
+        if (!isActive) {
+          return;
         }
+
+        if (isAxiosError(error) && error.response?.status === 401) {
+          setStatus("guest");
+          return;
+        }
+
+        setStatus(
+          hasLocallyPendingEnrollment ? "pending" : "unavailable",
+        );
+        setFeedback(
+          hasLocallyPendingEnrollment
+            ? null
+            : {
+                type: "error",
+                message:
+                  "Không thể tải thông tin tài khoản để kiểm tra trạng thái.",
+              },
+        );
       }
     };
 
@@ -101,12 +126,10 @@ export default function CourseEnrollmentButton({
           maKhoaHoc: courseId,
           taiKhoan: session.taiKhoan,
         },
-        session.accessToken,
       );
 
       markCoursePending(session.taiKhoan, courseId);
-      setStatus("pending");
-      setFeedback({
+      setStatus("pending");      setFeedback({
         message: "Đăng ký đã được gửi và đang chờ xét duyệt.",
         type: "success",
       });
@@ -152,16 +175,18 @@ export default function CourseEnrollmentButton({
               />
               Đang kiểm tra...
             </>
-          ) : status === "enrolled" ? (
+          ) : status === "registered" ? (
             <>
               <CheckCircle2 aria-hidden="true" className="size-4" />
-              Đã được duyệt
+              Đã đăng ký
             </>
           ) : status === "pending" ? (
             <>
               <Clock3 aria-hidden="true" className="size-4" />
               Đang chờ xét duyệt
             </>
+          ) : status === "unavailable" ? (
+            "Không thể kiểm tra trạng thái"
           ) : isSubmitting ? (
             <>
               <LoaderCircle

@@ -1,6 +1,7 @@
 import { ArrowLeft, LoaderCircle, Save } from "lucide-react";
 import Link from "next/link";
 
+import LoadingSpinner from "@/components/ui/loading-spinner";
 import { Button } from "@/components/ui/button";
 import { FieldError } from "@/components/ui/field";
 
@@ -32,13 +33,7 @@ export function AdminFormFieldError({ id, message }: AdminFormFieldErrorProps) {
 export function AdminFormLoading({ message }: { message: string }) {
   return (
     <div className="grid min-h-80 place-items-center rounded-2xl border border-slate-200 bg-white">
-      <div className="flex items-center gap-2 text-sm text-slate-600">
-        <LoaderCircle
-          aria-hidden="true"
-          className="size-5 animate-spin motion-reduce:animate-none"
-        />
-        {message}
-      </div>
+      <LoadingSpinner label={message} />
     </div>
   );
 }

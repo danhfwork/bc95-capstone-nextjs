@@ -33,7 +33,9 @@ const PAGE_SIZE = 10;
 export default function UserManagement() {
   const queryClient = useQueryClient();
   const searchParams = useSearchParams();
-  const accessToken = useAuthStore((state) => state.user?.accessToken);
+  const isAdmin = useAuthStore(
+    (state) => state.user?.maLoaiNguoiDung === "GV",
+  );
   const [page, setPage] = useState(1);
   const [searchInput, setSearchInput] = useState("");
   const [keyword, setKeyword] = useState("");
@@ -48,14 +50,20 @@ export default function UserManagement() {
 
   const deleteMutation = useMutation({
     mutationFn: async (username: string) => {
-      if (!accessToken) {
+      if (!isAdmin) {
         throw new Error("Missing admin session");
       }
-      return deleteUser(username, accessToken);
+      return deleteUser(username);
     },
     onSuccess: () => {
       setMutationError("");
       setMutationSuccess("Đã xóa người dùng thành công.");
+
+      if (page > 1 && usersQuery.data?.items.length === 1) {
+        setPage((currentPage) => currentPage - 1);
+        return;
+      }
+
       void queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
     },
     onError: (error: unknown) => {

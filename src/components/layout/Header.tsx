@@ -58,6 +58,7 @@ export default function Header({
             Tìm kiếm khóa học
           </Label>
           <Input
+            key={`header-course-search-${searchQuery}`}
             id="header-course-search"
             name="q"
             type="search"

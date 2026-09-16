@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import { Geist_Mono, Inter } from "next/font/google";
+import { Suspense } from "react";
+
+import NavigationLoading from "@/components/layout/NavigationLoading";
 
 import "./globals.css";
 
@@ -30,6 +33,9 @@ export default function RootLayout({
     >
       <body className="flex min-h-dvh flex-col bg-slate-50 font-[family-name:var(--font-inter)] text-slate-900">
         {children}
+        <Suspense fallback={null}>
+          <NavigationLoading />
+        </Suspense>
       </body>
     </html>
   );
