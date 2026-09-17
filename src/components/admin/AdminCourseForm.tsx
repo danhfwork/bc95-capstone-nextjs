@@ -18,7 +18,6 @@ import {
   DEFAULT_GROUP_ID,
   getCourseById,
   getCourseCategories,
-  updateCourse,
   updateCourseWithImage,
   type ApiCoursePayload,
 } from "@/app/lib/api";
@@ -56,7 +55,7 @@ type AdminCourseFormProps = {
 
 type CourseSaveVariables = {
   payload: ApiCoursePayload;
-  imageFile: File | null;
+  imageFile: File;
 };
 
 function createAlias(value: string): string {
@@ -128,21 +127,13 @@ export default function AdminCourseForm({ courseId }: AdminCourseFormProps) {
 
   const saveMutation = useMutation({
     mutationFn: async ({ payload, imageFile }: CourseSaveVariables) => {
-      if (!currentUser || currentUser.maLoaiNguoiDung !== "GV") {
+      if (!currentUser?.accessToken) {
         throw new Error("Missing admin session");
       }
 
-      if (isEditing) {
-        return imageFile
-          ? updateCourseWithImage(payload, imageFile)
-          : updateCourse(payload);
-      }
-
-      if (!imageFile) {
-        throw new Error("Missing course image");
-      }
-
-      return createCourseWithImage(payload, imageFile);
+      return isEditing
+        ? updateCourseWithImage(payload, imageFile)
+        : createCourseWithImage(payload, imageFile);
     },
     onSuccess: () => {
       router.push(`/admin/courses?status=${isEditing ? "updated" : "created"}`);
@@ -170,14 +161,7 @@ export default function AdminCourseForm({ courseId }: AdminCourseFormProps) {
 
     const existingCourse = courseQuery.data;
     clearErrors("root");
-    if (imageError) {
-      requestAnimationFrame(() =>
-        document.getElementById("imageFile")?.focus(),
-      );
-      return;
-    }
-
-    if (!imageFile && !isEditing) {
+    if (!imageFile) {
       setImageError("Vui lòng chọn một tệp hình ảnh để tải lên.");
       requestAnimationFrame(() =>
         document.getElementById("imageFile")?.focus(),
@@ -192,7 +176,7 @@ export default function AdminCourseForm({ courseId }: AdminCourseFormProps) {
       moTa: values.description,
       luotXem: existingCourse?.luotXem ?? 0,
       danhGia: existingCourse?.danhGia ?? 0,
-      hinhAnh: imageFile?.name || existingCourse?.hinhAnh || "",
+      hinhAnh: imageFile.name,
       maNhom: values.groupId.toLocaleUpperCase("vi-VN"),
       ngayTao: existingCourse?.ngayTao || format(new Date(), "dd/MM/yyyy"),
       maDanhMucKhoaHoc: values.categoryId,
@@ -214,15 +198,13 @@ export default function AdminCourseForm({ courseId }: AdminCourseFormProps) {
     }
 
     setImageFile(file);
-    setImageError(
-      file || isEditing ? null : "Vui lòng chọn một tệp hình ảnh để tải lên.",
-    );
+    setImageError(file ? null : "Vui lòng chọn một tệp hình ảnh để tải lên.");
   };
 
   const handleInvalid: SubmitErrorHandler<AdminCourseFormData> = (
     validationErrors,
   ) => {
-    if (!imageFile && !isEditing) {
+    if (!imageFile) {
       setImageError(
         (currentError) =>
           currentError ?? "Vui lòng chọn một tệp hình ảnh để tải lên.",
@@ -233,7 +215,7 @@ export default function AdminCourseForm({ courseId }: AdminCourseFormProps) {
       (fieldName) => fieldName !== "root",
     );
 
-    if (!imageFile && !isEditing && !hasFieldError) {
+    if (!imageFile && !hasFieldError) {
       requestAnimationFrame(() =>
         document.getElementById("imageFile")?.focus(),
       );
@@ -351,7 +333,7 @@ export default function AdminCourseForm({ courseId }: AdminCourseFormProps) {
         </div>
         <div>
           <Label htmlFor="groupId" className={adminLabelClassName}>
-            Mã nhóm (GP01) <span className="text-red-600">*</span>
+            Mã nhóm <span className="text-red-600">*</span>
           </Label>
           <Input
             id="groupId"
@@ -366,19 +348,14 @@ export default function AdminCourseForm({ courseId }: AdminCourseFormProps) {
         </div>
         <div className="md:col-span-2">
           <Label htmlFor="imageFile" className={adminLabelClassName}>
-            Hình ảnh khóa học
-            {!isEditing ? <span className="text-red-600"> *</span> : null}
+            Hình ảnh khóa học <span className="text-red-600">*</span>
           </Label>
           <label
             htmlFor="imageFile"
             className="flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 text-sm font-semibold text-slate-700 transition-colors hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700 focus-within:ring-2 focus-within:ring-blue-600 focus-within:ring-offset-2"
           >
             <Upload aria-hidden="true" className="size-4" />
-            {imageFile
-              ? imageFile.name
-              : isEditing
-                ? "Chọn tệp mới nếu muốn thay ảnh"
-                : "Chọn tệp hình ảnh"}
+            {imageFile ? imageFile.name : "Chọn tệp hình ảnh"}
             <input
               id="imageFile"
               type="file"
