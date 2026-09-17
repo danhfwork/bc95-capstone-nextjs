@@ -2,12 +2,12 @@
 
 import { create } from "zustand";
 
-import type { ApiAccountUser } from "../lib/api";
+import type { ApiSignInResponse } from "../lib/api";
 
 type AuthState = {
-  user: ApiAccountUser | null;
+  user: ApiSignInResponse | null;
   isHydrated: boolean;
-  setUser: (user: ApiAccountUser | null) => void;
+  setUser: (user: ApiSignInResponse | null) => void;
   clearUser: () => void;
 };
 

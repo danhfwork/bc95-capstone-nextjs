@@ -1,7 +1,6 @@
-import axios, { isAxiosError } from "axios";
+import { axiosClient, getAuthorizationHeaders } from "./axiosClient";
 
 export const DEFAULT_GROUP_ID = "GP01";
-export const AUTH_EXPIRED_EVENT = "cybersoft-auth-expired";
 
 export type ApiPaginatedResponse<T> = {
   currentPage: number;
@@ -88,6 +87,10 @@ export type ApiSignInPayload = {
   matKhau: string;
 };
 
+export type ApiSignInResponse = ApiAccountUser & {
+  accessToken: string;
+};
+
 export type ApiSignUpPayload = {
   taiKhoan: string;
   matKhau: string;
@@ -152,14 +155,14 @@ function getRequiredNumber(
 ): number {
   const value = record[key];
 
-  if (typeof value !== "number" || !Number.isFinite(value)) {
+  if (typeof value !== "number") {
     throw new Error(`API response is missing number field: ${key}`);
   }
 
   return value;
 }
 
-export function normalizeUserSummary(value: unknown): ApiUserSummary {
+function normalizeUserSummary(value: unknown): ApiUserSummary {
   if (!isRecord(value)) {
     throw new Error("API returned an invalid user response");
   }
@@ -230,11 +233,7 @@ function normalizeAccount(value: unknown): ApiAccount {
 
   const enrolledCourses = value.chiTietKhoaHocGhiDanh;
 
-  if (
-    enrolledCourses !== undefined &&
-    enrolledCourses !== null &&
-    !Array.isArray(enrolledCourses)
-  ) {
+  if (enrolledCourses !== undefined && !Array.isArray(enrolledCourses)) {
     throw new Error("API returned an invalid enrolled course list");
   }
 
@@ -244,51 +243,12 @@ function normalizeAccount(value: unknown): ApiAccount {
   };
 }
 
-export function normalizeCourseCategory(value: unknown): ApiCourseCategory {
-  if (!isRecord(value)) {
-    throw new Error("API returned an invalid course category response");
+function normalizeUserList(value: unknown): ApiUserSummary[] {
+  if (!Array.isArray(value)) {
+    throw new Error("API returned an invalid user list");
   }
 
-  return {
-    maDanhMuc: getRequiredString(value, "maDanhMuc"),
-    tenDanhMuc: getRequiredString(value, "tenDanhMuc"),
-  };
-}
-
-export function normalizeCourse(value: unknown): ApiCourse {
-  if (!isRecord(value)) {
-    throw new Error("API returned an invalid course response");
-  }
-
-  const creator = value.nguoiTao;
-  const category = value.danhMucKhoaHoc;
-
-  if (!isRecord(creator) || !isRecord(category)) {
-    throw new Error("API returned an invalid course relation");
-  }
-
-  return {
-    maKhoaHoc: getRequiredString(value, "maKhoaHoc"),
-    biDanh: getRequiredString(value, "biDanh"),
-    tenKhoaHoc: getRequiredString(value, "tenKhoaHoc"),
-    moTa: getRequiredString(value, "moTa"),
-    luotXem: getRequiredNumber(value, "luotXem"),
-    hinhAnh: getRequiredString(value, "hinhAnh"),
-    maNhom: getRequiredString(value, "maNhom"),
-    ngayTao: getRequiredString(value, "ngayTao"),
-    soLuongHocVien: getRequiredNumber(value, "soLuongHocVien"),
-    ...(typeof value.danhGia === "number" ? { danhGia: value.danhGia } : {}),
-    nguoiTao: {
-      taiKhoan: getRequiredString(creator, "taiKhoan"),
-      hoTen: getRequiredString(creator, "hoTen"),
-      maLoaiNguoiDung: getRequiredString(creator, "maLoaiNguoiDung"),
-      tenLoaiNguoiDung: getRequiredString(creator, "tenLoaiNguoiDung"),
-    },
-    danhMucKhoaHoc: {
-      maDanhMucKhoahoc: getRequiredString(category, "maDanhMucKhoahoc"),
-      tenDanhMucKhoaHoc: getRequiredString(category, "tenDanhMucKhoaHoc"),
-    },
-  };
+  return value.map(normalizeUserSummary);
 }
 
 function normalizeUserTypes(value: unknown): ApiUserType[] {
@@ -308,13 +268,7 @@ function normalizeUserTypes(value: unknown): ApiUserType[] {
   });
 }
 
-export function normalizeEnrollmentCourses(
-  value: unknown,
-): ApiEnrollmentCourse[] {
-  if (value === null || value === undefined) {
-    return [];
-  }
-
+function normalizeEnrollmentCourses(value: unknown): ApiEnrollmentCourse[] {
   if (!Array.isArray(value)) {
     throw new Error("API returned an invalid enrollment course list");
   }
@@ -329,31 +283,6 @@ export function normalizeEnrollmentCourses(
       tenKhoaHoc: getRequiredString(course, "tenKhoaHoc"),
     };
   });
-}
-
-function normalizeUsers(value: unknown): ApiUserSummary[] {
-  if (!Array.isArray(value)) {
-    throw new Error("API returned an invalid user list");
-  }
-
-  return value.map(normalizeUserSummary);
-}
-
-export function normalizePaginated<T>(
-  value: unknown,
-  normalizeItem: (item: unknown) => T,
-): ApiPaginatedResponse<T> {
-  if (!isRecord(value) || !Array.isArray(value.items)) {
-    throw new Error("API returned an invalid paginated response");
-  }
-
-  return {
-    currentPage: getRequiredNumber(value, "currentPage"),
-    count: getRequiredNumber(value, "count"),
-    totalPages: getRequiredNumber(value, "totalPages"),
-    totalCount: getRequiredNumber(value, "totalCount"),
-    items: value.items.map(normalizeItem),
-  };
 }
 
 function normalizeMessage(value: unknown): string {
@@ -374,34 +303,11 @@ function normalizeMessage(value: unknown): string {
   return "";
 }
 
-const clientApi = axios.create({
-  baseURL: "/api/cybersoft",
-  headers: { Accept: "application/json" },
-  timeout: 15_000,
-});
-
-const authApi = axios.create({
-  headers: { Accept: "application/json" },
-  timeout: 15_000,
-});
-
-clientApi.interceptors.response.use(undefined, (error: unknown) => {
-  if (
-    typeof window !== "undefined" &&
-    isAxiosError(error) &&
-    error.response?.status === 401
-  ) {
-    window.dispatchEvent(new Event(AUTH_EXPIRED_EVENT));
-  }
-
-  return Promise.reject(error);
-});
-
 export const getCourseCategories = async (
   categoryName = "",
 ): Promise<ApiCourseCategory[]> => {
   const normalizedCategoryName = categoryName.trim();
-  const { data } = await clientApi.get<unknown>(
+  const { data } = await axiosClient.get<ApiCourseCategory[]>(
     "/QuanLyKhoaHoc/LayDanhMucKhoaHoc",
     {
       params: {
@@ -412,18 +318,14 @@ export const getCourseCategories = async (
     },
   );
 
-  if (!Array.isArray(data)) {
-    throw new Error("API returned an invalid course category list");
-  }
-
-  return data.map(normalizeCourseCategory);
+  return data;
 };
 
 export const getCoursesByCategory = async (
   categoryId: string,
   groupId = DEFAULT_GROUP_ID,
 ): Promise<ApiCourse[]> => {
-  const { data } = await clientApi.get<unknown>(
+  const { data } = await axiosClient.get<ApiCourse[]>(
     "/QuanLyKhoaHoc/LayKhoaHocTheoDanhMuc",
     {
       params: {
@@ -433,11 +335,7 @@ export const getCoursesByCategory = async (
     },
   );
 
-  if (!Array.isArray(data)) {
-    throw new Error("API returned an invalid course list");
-  }
-
-  return data.map(normalizeCourse);
+  return data;
 };
 
 export const getCoursesPaged = async (
@@ -447,7 +345,7 @@ export const getCoursesPaged = async (
   groupId = DEFAULT_GROUP_ID,
 ): Promise<ApiPaginatedResponse<ApiCourse>> => {
   const normalizedCourseName = courseName.trim();
-  const { data } = await clientApi.get<unknown>(
+  const { data } = await axiosClient.get<ApiPaginatedResponse<ApiCourse>>(
     "/QuanLyKhoaHoc/LayDanhSachKhoaHoc_PhanTrang",
     {
       params: {
@@ -459,25 +357,33 @@ export const getCoursesPaged = async (
     },
   );
 
-  return normalizePaginated(data, normalizeCourse);
+  return data;
 };
 
 export const getCourseById = async (courseId: string): Promise<ApiCourse> => {
-  const { data } = await clientApi.get<unknown>(
+  const { data } = await axiosClient.get<ApiCourse>(
     "/QuanLyKhoaHoc/LayThongTinKhoaHoc",
     {
-      params: { maKhoaHoc: courseId },
+      params: {
+        maKhoaHoc: courseId,
+      },
     },
   );
 
-  return normalizeCourse(data);
+  return data;
 };
 
-export const deleteCourse = async (courseId: string): Promise<string> => {
-  const { data } = await clientApi.delete<unknown>(
+export const deleteCourse = async (
+  courseId: string,
+  accessToken: string,
+): Promise<string> => {
+  const { data } = await axiosClient.delete<unknown>(
     "/QuanLyKhoaHoc/XoaKhoaHoc",
     {
-      params: { MaKhoaHoc: courseId },
+      params: {
+        MaKhoaHoc: courseId,
+      },
+      headers: getAuthorizationHeaders(accessToken),
     },
   );
 
@@ -486,10 +392,14 @@ export const deleteCourse = async (courseId: string): Promise<string> => {
 
 export const enrollStudentInCourse = async (
   payload: ApiEnrollmentPayload,
+  accessToken: string,
 ): Promise<string> => {
-  const { data } = await clientApi.post<unknown>(
+  const { data } = await axiosClient.post<unknown>(
     "/QuanLyKhoaHoc/GhiDanhKhoaHoc",
     payload,
+    {
+      headers: getAuthorizationHeaders(accessToken),
+    },
   );
 
   return normalizeMessage(data);
@@ -497,10 +407,14 @@ export const enrollStudentInCourse = async (
 
 export const registerCourse = async (
   payload: ApiEnrollmentPayload,
+  accessToken: string,
 ): Promise<string> => {
-  const { data } = await clientApi.post<unknown>(
+  const { data } = await axiosClient.post<unknown>(
     "/QuanLyKhoaHoc/DangKyKhoaHoc",
     payload,
+    {
+      headers: getAuthorizationHeaders(accessToken),
+    },
   );
 
   return normalizeMessage(data);
@@ -508,10 +422,14 @@ export const registerCourse = async (
 
 export const cancelCourseRegistration = async (
   payload: ApiEnrollmentPayload,
+  accessToken: string,
 ): Promise<string> => {
-  const { data } = await clientApi.post<unknown>(
+  const { data } = await axiosClient.post<unknown>(
     "/QuanLyKhoaHoc/HuyGhiDanh",
     payload,
+    {
+      headers: getAuthorizationHeaders(accessToken),
+    },
   );
 
   return normalizeMessage(data);
@@ -537,7 +455,7 @@ export const createCourseWithImage = async (
   file: File,
 ): Promise<unknown> => {
   const formData = createCourseImageFormData(payload, file);
-  const { data } = await clientApi.post<unknown>(
+  const { data } = await axiosClient.post<unknown>(
     "/QuanLyKhoaHoc/ThemKhoaHocUploadHinh",
     formData,
   );
@@ -550,7 +468,7 @@ export const updateCourseWithImage = async (
   file: File,
 ): Promise<unknown> => {
   const formData = createCourseImageFormData(payload, file);
-  const { data } = await clientApi.post<unknown>(
+  const { data } = await axiosClient.post<unknown>(
     "/QuanLyKhoaHoc/CapNhatKhoaHocUpload",
     formData,
   );
@@ -558,19 +476,8 @@ export const updateCourseWithImage = async (
   return data;
 };
 
-export const updateCourse = async (
-  payload: ApiCoursePayload,
-): Promise<unknown> => {
-  const { data } = await clientApi.put<unknown>(
-    "/QuanLyKhoaHoc/CapNhatKhoaHoc",
-    payload,
-  );
-
-  return data;
-};
-
 export const getUserTypes = async (): Promise<ApiUserType[]> => {
-  const { data } = await clientApi.get<unknown>(
+  const { data } = await axiosClient.get<unknown>(
     "/QuanLyNguoiDung/LayDanhSachLoaiNguoiDung",
   );
 
@@ -579,52 +486,29 @@ export const getUserTypes = async (): Promise<ApiUserType[]> => {
 
 export const signIn = async (
   payload: ApiSignInPayload,
-): Promise<ApiAccountUser> => {
-  const { data } = await authApi.post<unknown>("/api/auth/login", {
-    account: payload.taiKhoan,
-    password: payload.matKhau,
-  });
+): Promise<ApiSignInResponse> => {
+  const { data } = await axiosClient.post<unknown>(
+    "/QuanLyNguoiDung/DangNhap",
+    payload,
+  );
 
-  if (!isRecord(data) || !isRecord(data.user)) {
+  if (!isRecord(data)) {
     throw new Error("API returned an invalid sign-in response");
   }
 
-  return normalizeAccountUser(data.user);
+  return {
+    ...normalizeAccountUser(data),
+    accessToken: getRequiredString(data, "accessToken"),
+  };
 };
 
 export const signUp = async (payload: ApiSignUpPayload): Promise<unknown> => {
-  const { data } = await authApi.post<unknown>("/api/auth/register", {
-    account: payload.taiKhoan,
-    fullName: payload.hoTen,
-    password: payload.matKhau,
-    email: payload.email,
-    phone: payload.soDT,
-  });
+  const { data } = await axiosClient.post<unknown>(
+    "/QuanLyNguoiDung/DangKy",
+    payload,
+  );
+
   return data;
-};
-
-export const getCurrentUserSession = async (): Promise<ApiAccountUser | null> => {
-  try {
-    const { data } = await authApi.get<unknown>("/api/auth/session", {
-      params: { _: Date.now() },
-    });
-
-    if (!isRecord(data) || !isRecord(data.user)) {
-      throw new Error("API returned an invalid session response");
-    }
-
-    return normalizeAccountUser(data.user);
-  } catch (error: unknown) {
-    if (isAxiosError(error) && error.response?.status === 401) {
-      return null;
-    }
-
-    throw error;
-  }
-};
-
-export const logoutSession = async (): Promise<void> => {
-  await authApi.delete("/api/auth/session");
 };
 
 export const getUsers = async (
@@ -632,7 +516,7 @@ export const getUsers = async (
   groupId = DEFAULT_GROUP_ID,
 ): Promise<ApiUserSummary[]> => {
   const normalizedKeyword = keyword.trim();
-  const { data } = await clientApi.get<unknown>(
+  const { data } = await axiosClient.get<unknown>(
     "/QuanLyNguoiDung/LayDanhSachNguoiDung",
     {
       params: {
@@ -642,7 +526,7 @@ export const getUsers = async (
     },
   );
 
-  return normalizeUsers(data);
+  return normalizeUserList(data);
 };
 
 export const getUsersPaged = async (
@@ -652,7 +536,7 @@ export const getUsersPaged = async (
   groupId = DEFAULT_GROUP_ID,
 ): Promise<ApiPaginatedResponse<ApiUserSummary>> => {
   const normalizedKeyword = keyword.trim();
-  const { data } = await clientApi.get<unknown>(
+  const { data } = await axiosClient.get<ApiPaginatedResponse<unknown>>(
     "/QuanLyNguoiDung/LayDanhSachNguoiDung_PhanTrang",
     {
       params: {
@@ -664,14 +548,17 @@ export const getUsersPaged = async (
     },
   );
 
-  return normalizePaginated(data, normalizeUserSummary);
+  return {
+    ...data,
+    items: data.items.map(normalizeUserSummary),
+  };
 };
 
 export const searchUsers = async (
   keyword: string,
   groupId = DEFAULT_GROUP_ID,
 ): Promise<ApiUserSummary[]> => {
-  const { data } = await clientApi.get<unknown>(
+  const { data } = await axiosClient.get<unknown>(
     "/QuanLyNguoiDung/TimKiemNguoiDung",
     {
       params: {
@@ -681,34 +568,54 @@ export const searchUsers = async (
     },
   );
 
-  return normalizeUsers(data);
+  return normalizeUserList(data);
 };
 
-export const getAccountInfo = async (): Promise<ApiAccount> => {
-  const { data } = await clientApi.post<unknown>(
+async function requestAccountInfo(accessToken: string): Promise<unknown> {
+  const { data: accountInfo } = await axiosClient.post<unknown>(
     "/QuanLyNguoiDung/ThongTinTaiKhoan",
+    undefined,
+    {
+      headers: getAuthorizationHeaders(accessToken),
+    },
   );
 
-  return normalizeAccount(data);
+  return accountInfo;
+}
+
+export const getAccountInfo = async (
+  accessToken: string,
+): Promise<ApiAccount> => {
+  const accountInfo = await requestAccountInfo(accessToken);
+
+  return normalizeAccount(accountInfo);
 };
 
 export const createUser = async (
   payload: ApiUserPayload,
+  accessToken: string,
 ): Promise<unknown> => {
-  const { data } = await clientApi.post<unknown>(
+  const { data } = await axiosClient.post<unknown>(
     "/QuanLyNguoiDung/ThemNguoiDung",
     payload,
+    {
+      headers: getAuthorizationHeaders(accessToken),
+    },
   );
 
   return data;
 };
 
 export const updateUser = async (
-  payload: ApiProfileUpdatePayload,
+  payload: ApiUserPayload,
+  accessToken: string,
 ): Promise<unknown> => {
-  const { data } = await clientApi.put<unknown>(
+  const { data } = await axiosClient.put<unknown>(
     "/QuanLyNguoiDung/CapNhatThongTinNguoiDung",
     payload,
+    {
+      headers: getAuthorizationHeaders(accessToken),
+    },
   );
 
   return data;
@@ -716,15 +623,46 @@ export const updateUser = async (
 
 export const updateCurrentUserProfile = async (
   payload: ApiProfileUpdatePayload,
+  accessToken: string,
 ): Promise<unknown> => {
-  return updateUser(payload);
+  let password = payload.matKhau;
+
+  if (!password) {
+    const accountInfo = await requestAccountInfo(accessToken);
+
+    if (!isRecord(accountInfo)) {
+      throw new Error("API returned an invalid account response");
+    }
+
+    const currentPassword = getRequiredString(accountInfo, "matKhau");
+
+    if (!currentPassword) {
+      throw new Error("API returned an empty account password");
+    }
+
+    password = currentPassword;
+  }
+
+  return updateUser(
+    {
+      ...payload,
+      matKhau: password,
+    },
+    accessToken,
+  );
 };
 
-export const deleteUser = async (username: string): Promise<string> => {
-  const { data } = await clientApi.delete<unknown>(
+export const deleteUser = async (
+  username: string,
+  accessToken: string,
+): Promise<string> => {
+  const { data } = await axiosClient.delete<unknown>(
     "/QuanLyNguoiDung/XoaNguoiDung",
     {
-      params: { TaiKhoan: username },
+      params: {
+        TaiKhoan: username,
+      },
+      headers: getAuthorizationHeaders(accessToken),
     },
   );
 
@@ -733,12 +671,16 @@ export const deleteUser = async (username: string): Promise<string> => {
 
 export const getUnenrolledCoursesForUser = async (
   username: string,
+  accessToken: string,
 ): Promise<ApiEnrollmentCourse[]> => {
-  const { data } = await clientApi.post<unknown>(
+  const { data } = await axiosClient.post<unknown>(
     "/QuanLyNguoiDung/LayDanhSachKhoaHocChuaGhiDanh",
     undefined,
     {
-      params: { TaiKhoan: username },
+      params: {
+        TaiKhoan: username,
+      },
+      headers: getAuthorizationHeaders(accessToken),
     },
   );
 
@@ -747,10 +689,14 @@ export const getUnenrolledCoursesForUser = async (
 
 export const getPendingCoursesForUser = async (
   username: string,
+  accessToken: string,
 ): Promise<ApiEnrollmentCourse[]> => {
-  const { data } = await clientApi.post<unknown>(
+  const { data } = await axiosClient.post<unknown>(
     "/QuanLyNguoiDung/LayDanhSachKhoaHocChoXetDuyet",
     { taiKhoan: username },
+    {
+      headers: getAuthorizationHeaders(accessToken),
+    },
   );
 
   return normalizeEnrollmentCourses(data);
@@ -758,10 +704,14 @@ export const getPendingCoursesForUser = async (
 
 export const getApprovedCoursesForUser = async (
   username: string,
+  accessToken: string,
 ): Promise<ApiEnrollmentCourse[]> => {
-  const { data } = await clientApi.post<unknown>(
+  const { data } = await axiosClient.post<unknown>(
     "/QuanLyNguoiDung/LayDanhSachKhoaHocDaXetDuyet",
     { taiKhoan: username },
+    {
+      headers: getAuthorizationHeaders(accessToken),
+    },
   );
 
   return normalizeEnrollmentCourses(data);
@@ -769,37 +719,45 @@ export const getApprovedCoursesForUser = async (
 
 export const getUnenrolledStudentsForCourse = async (
   courseId: string,
+  accessToken: string,
 ): Promise<ApiUserSummary[]> => {
-  const { data } = await clientApi.post<unknown>(
+  const { data } = await axiosClient.post<unknown>(
     "/QuanLyNguoiDung/LayDanhSachNguoiDungChuaGhiDanh",
     { maKhoaHoc: courseId },
+    {
+      headers: getAuthorizationHeaders(accessToken),
+    },
   );
 
-  return normalizeUsers(data);
+  return normalizeUserList(data);
 };
 
 export const getPendingStudentsForCourse = async (
   courseId: string,
+  accessToken: string,
 ): Promise<ApiUserSummary[]> => {
-  const { data } = await clientApi.post<unknown>(
+  const { data } = await axiosClient.post<unknown>(
     "/QuanLyNguoiDung/LayDanhSachHocVienChoXetDuyet",
     { maKhoaHoc: courseId },
+    {
+      headers: getAuthorizationHeaders(accessToken),
+    },
   );
 
-  return normalizeUsers(data);
+  return normalizeUserList(data);
 };
 
 export const getStudentsForCourse = async (
   courseId: string,
+  accessToken: string,
 ): Promise<ApiUserSummary[]> => {
-  const { data } = await clientApi.post<unknown>(
+  const { data } = await axiosClient.post<unknown>(
     "/QuanLyNguoiDung/LayDanhSachHocVienKhoaHoc",
     { maKhoaHoc: courseId },
+    {
+      headers: getAuthorizationHeaders(accessToken),
+    },
   );
 
-  return normalizeUsers(data);
+  return normalizeUserList(data);
 };
-
-export function isUnauthorizedError(error: unknown): boolean {
-  return isAxiosError(error) && error.response?.status === 401;
-}

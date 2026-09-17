@@ -35,6 +35,7 @@ import {
   getAccountErrorMessage,
   getCourseCancellationErrorMessage,
 } from "@/app/lib/errors";
+import { clearSession } from "@/app/lib/session";
 import { useAuthStore } from "@/app/store/useAuthStore";
 import CourseImage from "@/components/course/CourseImage";
 import { getCourseImageUrl } from "@/components/course/courseContent";
@@ -215,7 +216,7 @@ export default function StudentProfile() {
 
     try {
       const [accountResult, userTypesResult] = await Promise.allSettled([
-        getAccountInfo(),
+        getAccountInfo(user.accessToken),
         getUserTypes(),
       ]);
 
@@ -230,6 +231,7 @@ export default function StudentProfile() {
       }
     } catch (error: unknown) {
       if (isAxiosError(error) && error.response?.status === 401) {
+        clearSession();
         clearUser();
         router.replace("/login");
         return;
@@ -273,6 +275,7 @@ export default function StudentProfile() {
           maKhoaHoc: course.maKhoaHoc,
           taiKhoan: user.taiKhoan,
         },
+        user.accessToken,
       );
 
       clearPendingCourse(user.taiKhoan, course.maKhoaHoc);
@@ -415,6 +418,7 @@ export default function StudentProfile() {
               <ProfileUpdateDialog
                 key={`${account.hoTen}-${account.email}-${account.soDT}`}
                 account={account}
+                accessToken={user.accessToken}
                 onUpdated={(updatedAccount) => {
                   setAccount(updatedAccount);
                   setFeedback({

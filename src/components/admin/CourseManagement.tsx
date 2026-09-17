@@ -33,9 +33,7 @@ const PAGE_SIZE = 10;
 export default function CourseManagement() {
   const queryClient = useQueryClient();
   const searchParams = useSearchParams();
-  const isAdmin = useAuthStore(
-    (state) => state.user?.maLoaiNguoiDung === "GV",
-  );
+  const accessToken = useAuthStore((state) => state.user?.accessToken);
   const [page, setPage] = useState(1);
   const [searchInput, setSearchInput] = useState("");
   const [courseName, setCourseName] = useState("");
@@ -50,20 +48,14 @@ export default function CourseManagement() {
   });
   const deleteMutation = useMutation({
     mutationFn: async (courseId: string) => {
-      if (!isAdmin) {
+      if (!accessToken) {
         throw new Error("Missing admin session");
       }
-      return deleteCourse(courseId);
+      return deleteCourse(courseId, accessToken);
     },
     onSuccess: () => {
       setMutationError("");
       setMutationSuccess("Đã xóa khóa học thành công.");
-
-      if (page > 1 && coursesQuery.data?.items.length === 1) {
-        setPage((currentPage) => currentPage - 1);
-        return;
-      }
-
       void queryClient.invalidateQueries({ queryKey: ["admin", "courses"] });
     },
     onError: (error: unknown) => {

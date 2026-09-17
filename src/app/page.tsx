@@ -16,7 +16,7 @@ import {
   type ApiCourse,
   type ApiCourseCategory,
   type ApiPaginatedResponse,
-} from "@/app/lib/serverApi";
+} from "@/app/lib/api";
 import { Button } from "@/components/ui/button";
 import { PaginationControls } from "@/components/ui/pagination";
 
