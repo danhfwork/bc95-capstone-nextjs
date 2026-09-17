@@ -3,8 +3,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Pencil, Plus, Trash2, UsersRound } from "lucide-react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { FormEvent, useEffect, useState } from "react";
 
 import { DEFAULT_GROUP_ID, deleteUser, getUsersPaged } from "@/app/lib/api";
 import { getApiErrorMessage } from "@/app/lib/errors";
@@ -31,15 +31,25 @@ import {
 const PAGE_SIZE = 10;
 
 export default function UserManagement() {
+  const router = useRouter();
   const queryClient = useQueryClient();
   const searchParams = useSearchParams();
-  const accessToken = useAuthStore((state) => state.user?.accessToken);
+  const currentUser = useAuthStore((state) => state.user);
+  const accessToken = currentUser?.accessToken;
   const [page, setPage] = useState(1);
   const [searchInput, setSearchInput] = useState("");
   const [keyword, setKeyword] = useState("");
   const [mutationError, setMutationError] = useState("");
   const [mutationSuccess, setMutationSuccess] = useState("");
   const status = searchParams.get("status");
+
+  useEffect(() => {
+    if (status !== "created" && status !== "updated") {
+      return;
+    }
+
+    router.replace("/admin/users", { scroll: false });
+  }, [router, status]);
 
   const usersQuery = useQuery({
     queryKey: ["admin", "users", page, keyword, DEFAULT_GROUP_ID],
@@ -70,6 +80,16 @@ export default function UserManagement() {
     event.preventDefault();
     setPage(1);
     setKeyword(searchInput.trim());
+  };
+
+  const handleDelete = (username: string) => {
+    if (username === currentUser?.taiKhoan) {
+      setMutationSuccess("");
+      setMutationError("Không thể xóa tài khoản đang đăng nhập.");
+      return;
+    }
+
+    deleteMutation.mutate(username);
   };
 
   const users = usersQuery.data?.items ?? [];
@@ -204,27 +224,41 @@ export default function UserManagement() {
                       >
                         <Pencil aria-hidden="true" className="size-4" />
                       </Button>
-                      <ConfirmationDialog
-                        trigger={
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            aria-label={`Xóa ${user.hoTen}`}
-                            className="size-10 text-slate-600 hover:bg-red-50 hover:text-red-700"
-                          >
-                            <Trash2 aria-hidden="true" className="size-4" />
-                          </Button>
-                        }
-                        icon={Trash2}
-                        title="Xóa người dùng?"
-                        description="Tài khoản này sẽ bị xóa khỏi hệ thống. Thao tác này không thể hoàn tác."
-                        itemLabel="Tài khoản"
-                        itemName={user.taiKhoan}
-                        actionLabel="Xóa người dùng"
-                        pendingLabel="Đang xóa..."
-                        isPending={deleteMutation.isPending}
-                        onConfirm={() => deleteMutation.mutate(user.taiKhoan)}
-                      />
+                      {user.taiKhoan === currentUser?.taiKhoan ? (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          disabled
+                          aria-label="Không thể xóa tài khoản đang đăng nhập"
+                          title="Không thể xóa tài khoản đang đăng nhập"
+                          className="size-10 text-slate-400"
+                        >
+                          <Trash2 aria-hidden="true" className="size-4" />
+                        </Button>
+                      ) : (
+                        <ConfirmationDialog
+                          trigger={
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              aria-label={`Xóa ${user.hoTen}`}
+                              className="size-10 text-slate-600 hover:bg-red-50 hover:text-red-700"
+                            >
+                              <Trash2 aria-hidden="true" className="size-4" />
+                            </Button>
+                          }
+                          icon={Trash2}
+                          title="Xóa người dùng?"
+                          description="Tài khoản này sẽ bị xóa khỏi hệ thống. Thao tác này không thể hoàn tác."
+                          itemLabel="Tài khoản"
+                          itemName={user.taiKhoan}
+                          actionLabel="Xóa người dùng"
+                          pendingLabel="Đang xóa..."
+                          isPending={deleteMutation.isPending}
+                          onConfirm={() => handleDelete(user.taiKhoan)}
+                        />
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>

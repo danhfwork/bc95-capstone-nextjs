@@ -13,6 +13,13 @@ npm run dev
 
 Mở [http://localhost:3000](http://localhost:3000) trong trình duyệt. Các biến môi trường API được đọc từ file `.env.local`.
 
+## Tài khoản demo
+
+| Vai trò | Tài khoản | Mật khẩu |
+| --- | --- | --- |
+| user | `.99` | `1234` |
+| admin | `.1` | `12312423` |
+
 ## Kiểm tra
 
 ```bash
