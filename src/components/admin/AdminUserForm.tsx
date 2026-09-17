@@ -15,6 +15,7 @@ import {
   type ApiUserPayload,
 } from "@/app/lib/api";
 import { getApiErrorMessage } from "@/app/lib/errors";
+import { clearSession, updateSessionUser } from "@/app/lib/session";
 import { useAuthStore } from "@/app/store/useAuthStore";
 import PasswordInput from "@/components/forms/FormControls";
 import { Button } from "@/components/ui/button";
@@ -46,6 +47,8 @@ type AdminUserFormProps = {
 export default function AdminUserForm({ username }: AdminUserFormProps) {
   const router = useRouter();
   const currentUser = useAuthStore((state) => state.user);
+  const setUser = useAuthStore((state) => state.setUser);
+  const clearUser = useAuthStore((state) => state.clearUser);
   const isEditing = Boolean(username);
   const existingUserQuery = useQuery({
     queryKey: ["admin", "user", username],
@@ -106,7 +109,33 @@ export default function AdminUserForm({ username }: AdminUserFormProps) {
         ? updateUser(payload, currentUser.accessToken)
         : createUser(payload, currentUser.accessToken);
     },
-    onSuccess: () => {
+    onSuccess: (_, payload) => {
+      if (
+        isEditing &&
+        currentUser &&
+        currentUser.taiKhoan === payload.taiKhoan
+      ) {
+        if (currentUser.maLoaiNguoiDung !== payload.maLoaiNguoiDung) {
+          clearSession();
+          clearUser();
+          router.replace("/login");
+          return;
+        }
+
+        const updatedSession = updateSessionUser({
+          taiKhoan: payload.taiKhoan,
+          hoTen: payload.hoTen,
+          soDT: payload.soDT,
+          maNhom: payload.maNhom,
+          email: payload.email,
+          maLoaiNguoiDung: payload.maLoaiNguoiDung,
+        });
+
+        if (updatedSession) {
+          setUser(updatedSession);
+        }
+      }
+
       router.push(`/admin/users?status=${isEditing ? "updated" : "created"}`);
     },
     onError: (error: unknown) => {
@@ -206,11 +235,28 @@ export default function AdminUserForm({ username }: AdminUserFormProps) {
             id="password"
             autoComplete="new-password"
             aria-invalid={Boolean(errors.password)}
-            aria-describedby={errors.password ? "password-error" : undefined}
+            aria-describedby={
+              errors.password
+                ? isEditing
+                  ? "password-help password-error"
+                  : "password-error"
+                : isEditing
+                  ? "password-help"
+                  : undefined
+            }
             placeholder="Tối thiểu 6 ký tự"
             className={inputClassName}
             {...register("password")}
           />
+          {isEditing ? (
+            <p
+              id="password-help"
+              className="mt-1 text-xs leading-5 text-amber-700"
+            >
+              Mật khẩu mới là bắt buộc khi lưu thay đổi và sẽ thay thế mật khẩu
+              hiện tại.
+            </p>
+          ) : null}
           <FieldError id="password-error" message={errors.password?.message} />
         </div>
 
