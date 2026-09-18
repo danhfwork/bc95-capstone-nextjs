@@ -2,8 +2,10 @@ import { z } from "zod";
 
 export const accountSchema = z
   .string()
-  .trim()
   .min(1, { message: "Vui lòng nhập tên tài khoản." })
+  .regex(/^\S+$/, {
+    message: "Tên tài khoản không được chứa dấu cách.",
+  })
   .min(3, { message: "Tên tài khoản phải có ít nhất 3 ký tự." });
 
 export const fullNameSchema = z
@@ -27,8 +29,8 @@ export const phoneSchema = z
   .string()
   .trim()
   .min(1, { message: "Vui lòng nhập số điện thoại." })
-  .regex(/^(?:\+84|0)(?:\s?\d){9}$/, {
-    message: "Số điện thoại phải bắt đầu bằng 0 hoặc +84 và gồm 10 chữ số.",
+  .regex(/^0\d{9}$/, {
+    message: "Số điện thoại phải bắt đầu bằng 0 và gồm 10 chữ số.",
   });
 
 export const loginSchema = z.object({

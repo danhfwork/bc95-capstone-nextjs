@@ -52,7 +52,7 @@ export default function Footer() {
       aria-label="Chân trang"
       className="border-t border-blue-200 bg-blue-100 text-slate-700"
     >
-      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-6 sm:grid-cols-2 sm:px-6 md:grid-cols-3 md:gap-4 lg:px-8">
+      <div className="mx-auto grid max-w-7xl w-full gap-8 px-4 py-6 sm:grid-cols-2 sm:px-6 md:grid-cols-3 md:gap-4 lg:px-8">
         <section aria-labelledby="footer-brand">
           <h2 id="footer-brand">
             <Link

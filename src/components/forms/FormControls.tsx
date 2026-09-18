@@ -8,10 +8,10 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 export const authInputClassName =
-  "h-12 bg-slate-50 pl-11 text-base text-slate-900 placeholder:text-slate-500 focus-visible:border-blue-600 focus-visible:bg-white focus-visible:ring-blue-100 aria-invalid:border-red-500 aria-invalid:ring-red-100 md:text-base";
+  "h-12 bg-slate-50 pl-11 text-base text-slate-900 placeholder:text-slate-500 focus-visible:border-blue-600 focus-visible:bg-white focus-visible:ring-blue-100 aria-invalid:border-red-500 aria-invalid:ring-red-100 md:text-base lg:h-11 lg:text-sm";
 
 export const authFieldLabelClassName =
-  "mb-2 text-sm leading-5 font-semibold text-slate-900";
+  "mb-2 text-sm leading-5 font-semibold text-slate-900 lg:text-xs lg:leading-4";
 
 type PasswordInputProps = Omit<React.ComponentProps<typeof Input>, "type"> & {
   hidePasswordLabel?: string;

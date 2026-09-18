@@ -83,17 +83,17 @@ export default function RegisterForm() {
 
   return (
     <>
-      <div className="mb-6">
+      <div className="mb-2">
         <p className="mb-2 text-sm font-semibold tracking-wider text-blue-600 uppercase">
           Bắt đầu hành trình
         </p>
         <h2
           id="register-title"
-          className="text-3xl font-bold tracking-tight text-slate-900"
+          className="text-3xl font-bold tracking-tight text-slate-900 lg:text-2xl"
         >
           Đăng ký tài khoản
         </h2>
-        <p className="mt-1 text-base leading-6 text-slate-500">
+        <p className="mt-1 text-base leading-6 text-slate-500 lg:text-sm lg:leading-5">
           Vui lòng điền đầy đủ thông tin để tham gia khóa học.
         </p>
       </div>
@@ -134,7 +134,7 @@ export default function RegisterForm() {
                     className={inputClassName}
                   />
                 </div>
-                <div className="min-h-6 pt-1">
+                <div className="min-h-6 pt-1 lg:min-h-5">
                   <FieldError
                     id="register-account-error"
                     errors={[fieldState.error]}
@@ -175,7 +175,7 @@ export default function RegisterForm() {
                     className={inputClassName}
                   />
                 </div>
-                <div className="min-h-6 pt-1">
+                <div className="min-h-6 pt-1 lg:min-h-5">
                   <FieldError
                     id="register-full-name-error"
                     errors={[fieldState.error]}
@@ -212,7 +212,7 @@ export default function RegisterForm() {
                     className={inputClassName}
                     toggleClassName="focus-visible:border-transparent focus-visible:ring-blue-600"
                   />
-                  <div className="min-h-6 pt-1">
+                  <div className="min-h-6 pt-1 lg:min-h-5">
                     <FieldError
                       id="register-password-error"
                       errors={[fieldState.error]}
@@ -252,7 +252,7 @@ export default function RegisterForm() {
                     showPasswordLabel="Hiện mật khẩu xác nhận"
                     toggleClassName="focus-visible:border-transparent focus-visible:ring-blue-600"
                   />
-                  <div className="min-h-6 pt-1">
+                  <div className="min-h-6 pt-1 lg:min-h-5">
                     <FieldError
                       id="register-confirm-password-error"
                       errors={[fieldState.error]}
@@ -295,7 +295,7 @@ export default function RegisterForm() {
                       className={inputClassName}
                     />
                   </div>
-                  <div className="min-h-6 pt-1">
+                  <div className="min-h-6 pt-1 lg:min-h-5">
                     <FieldError
                       id="register-email-error"
                       errors={[fieldState.error]}
@@ -333,11 +333,11 @@ export default function RegisterForm() {
                       aria-describedby={
                         fieldState.error ? "register-phone-error" : undefined
                       }
-                      placeholder="090 123 4567"
+                      placeholder="0901234567"
                       className={inputClassName}
                     />
                   </div>
-                  <div className="min-h-6 pt-1">
+                  <div className="min-h-6 pt-1 lg:min-h-5">
                     <FieldError
                       id="register-phone-error"
                       errors={[fieldState.error]}
