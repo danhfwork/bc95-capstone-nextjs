@@ -119,7 +119,7 @@ export default function LoginForm({ redirectTo = "/" }: LoginFormProps) {
                     aria-describedby={
                       fieldState.error ? "account-error" : undefined
                     }
-                    placeholder="Nhập tên đăng nhập hoặc email"
+                    placeholder="Nhập tên đăng nhập"
                     className={inputClassName}
                   />
                 </div>

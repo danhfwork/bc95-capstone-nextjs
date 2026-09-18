@@ -37,7 +37,7 @@ export const loginSchema = z.object({
   account: z
     .string()
     .trim()
-    .min(1, { message: "Vui lòng nhập tên đăng nhập hoặc email." })
+    .min(1, { message: "Vui lòng nhập tên đăng nhập" })
     .min(1, { message: "Tên đăng nhập phải có ít nhất 1 ký tự." }),
   password: z
     .string()
