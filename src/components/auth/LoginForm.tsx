@@ -82,11 +82,11 @@ export default function LoginForm({ redirectTo = "/" }: LoginFormProps) {
         </p>
         <h2
           id="login-title"
-          className="text-3xl font-bold tracking-tight text-slate-900"
+          className="text-3xl font-bold tracking-tight text-slate-900 lg:text-2xl"
         >
           Đăng nhập
         </h2>
-        <p className="mt-1 text-base leading-6 text-slate-500">
+        <p className="mt-1 text-base leading-6 text-slate-500 lg:text-sm lg:leading-5">
           Tiếp tục hành trình chinh phục công nghệ của bạn.
         </p>
       </div>
@@ -123,7 +123,7 @@ export default function LoginForm({ redirectTo = "/" }: LoginFormProps) {
                     className={inputClassName}
                   />
                 </div>
-                <div className="min-h-6 pt-1">
+                <div className="min-h-6 pt-1 lg:min-h-5">
                   <FieldError
                     id="account-error"
                     errors={[fieldState.error]}
@@ -155,7 +155,7 @@ export default function LoginForm({ redirectTo = "/" }: LoginFormProps) {
                   className={inputClassName}
                   toggleClassName="focus-visible:border-transparent focus-visible:ring-blue-600"
                 />
-                <div className="min-h-6 pt-1">
+                <div className="min-h-6 pt-1 lg:min-h-5">
                   <FieldError
                     id="password-error"
                     errors={[fieldState.error]}

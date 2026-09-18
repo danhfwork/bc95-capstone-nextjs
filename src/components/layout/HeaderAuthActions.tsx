@@ -19,13 +19,16 @@ export default function HeaderAuthActions() {
 
   if (!isHydrated) {
     return (
-      <div aria-hidden="true" className="ml-auto h-10 w-36 shrink-0 sm:ml-0" />
+      <div
+        aria-hidden="true"
+        className="ml-auto h-10 w-44 shrink-0 sm:ml-0 lg:w-52"
+      />
     );
   }
 
   if (!user) {
     return (
-      <div className="ml-auto flex h-10 w-36 shrink-0 items-center justify-end gap-2 sm:ml-0">
+      <div className="ml-auto flex h-10 w-44 shrink-0 items-center justify-end gap-2 sm:ml-0 lg:w-52">
         <Button
           render={<Link href="/login" />}
           nativeButton={false}
@@ -51,14 +54,14 @@ export default function HeaderAuthActions() {
   const isInstructor = user.maLoaiNguoiDung === "GV";
 
   return (
-    <div className="ml-auto flex h-10 min-w-36 shrink-0 items-center justify-end sm:ml-0">
+    <div className="ml-auto flex h-10 w-44 shrink-0 items-center justify-end sm:ml-0 lg:w-52">
       <DropdownMenu>
         <DropdownMenuTrigger
           openOnHover
           delay={100}
           closeDelay={150}
           title={displayName}
-          className="flex min-h-10 min-w-0 cursor-pointer items-center gap-2 rounded-lg px-1 text-slate-900 hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 data-popup-open:bg-blue-50"
+          className="flex min-h-10 w-full min-w-0 cursor-pointer items-center justify-end gap-2 rounded-lg px-1 text-slate-900 hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 data-popup-open:bg-blue-50"
         >
           <span className="sr-only">Mở menu tài khoản của {displayName}</span>
           <span
@@ -69,7 +72,7 @@ export default function HeaderAuthActions() {
           </span>
           <span
             aria-hidden="true"
-            className="hidden max-w-24 truncate text-xs font-semibold lg:block"
+            className="hidden max-w-40 truncate text-xs font-semibold lg:block"
           >
             {displayName}
           </span>
