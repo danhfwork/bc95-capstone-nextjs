@@ -242,7 +242,7 @@ export default function AdminShell({
           </Sheet>
         </div>
         <div className="hidden lg:block">
-          <p className="text-sm text-slate-500">Quản trị hệ thống</p>
+          <p className="text-sm text-slate-500">Quản trị viên</p>
         </div>
         <div className="flex min-w-0 items-center gap-3">
           <span

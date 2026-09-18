@@ -24,7 +24,7 @@ import {
 import { getApiErrorMessage } from "@/app/lib/errors";
 import { useAuthStore } from "@/app/store/useAuthStore";
 import { Button } from "@/components/ui/button";
-import { PaginationButtons } from "@/components/ui/pagination";
+import { PaginationControls } from "@/components/ui/pagination";
 
 import { AdminPage, AdminPageHeader, AdminSearchForm } from "./AdminPage";
 import EnrollmentWorkspace, {
@@ -150,11 +150,6 @@ export default function CourseEnrollmentManagement() {
   return (
     <AdminPage>
       <AdminPageHeader title="Quản lý ghi danh" />
-      <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-        Chọn một khóa học để quản lý người dùng chưa ghi danh, học viên chờ
-        duyệt và danh sách lớp.
-      </p>
-
       <EnrollmentViewSwitcher activeView="courses" />
 
       <section
@@ -228,22 +223,19 @@ export default function CourseEnrollmentManagement() {
           </ul>
         )}
 
-        <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4">
-          <p className="text-sm text-slate-500">
-            Trang {page} / {totalPages}
-          </p>
-          <PaginationButtons
-            currentPage={page}
-            totalPages={totalPages}
-            isPending={coursesQuery.isFetching}
-            previousAriaLabel="Trang khóa học trước"
-            nextAriaLabel="Trang khóa học sau"
-            onPageChange={(nextPage) => {
-              setPage(nextPage);
-              setSelectedCourse(null);
-            }}
-          />
-        </div>
+        {totalPages > 1 ? (
+          <div className="mt-5 border-t border-slate-200 px-4 py-4">
+            <PaginationControls
+              currentPage={page}
+              totalPages={totalPages}
+              isPending={coursesQuery.isFetching}
+              onPageChange={(nextPage) => {
+                setPage(nextPage);
+                setSelectedCourse(null);
+              }}
+            />
+          </div>
+        ) : null}
       </section>
 
       <EnrollmentWorkspace

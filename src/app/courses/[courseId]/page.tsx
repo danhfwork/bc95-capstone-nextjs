@@ -253,7 +253,10 @@ export default async function CourseDetailPage({
                   >
                     Mô tả khóa học
                   </h2>
-                  <p className="mt-4 max-w-3xl whitespace-pre-line break-words text-base leading-7 text-slate-700">
+                  <p
+                    tabIndex={0}
+                    className="mt-4 h-36 min-h-36 max-h-36 max-w-3xl overflow-y-auto pr-2 whitespace-pre-line break-words text-base leading-7 text-slate-700 focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 focus-visible:outline-none"
+                  >
                     {description}
                   </p>
                 </section>

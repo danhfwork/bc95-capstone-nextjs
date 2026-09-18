@@ -17,12 +17,13 @@ import {
   getApprovedCoursesForUser,
   getPendingCoursesForUser,
   getUnenrolledCoursesForUser,
-  getUsers,
+  getUsersPaged,
   type ApiEnrollmentCourse,
   type ApiUserSummary,
 } from "@/app/lib/api";
 import { getApiErrorMessage } from "@/app/lib/errors";
 import { useAuthStore } from "@/app/store/useAuthStore";
+import { PaginationControls } from "@/components/ui/pagination";
 
 import EnrollmentWorkspace, {
   SelectableEntityCard,
@@ -36,9 +37,12 @@ type EnrollmentAction = {
   course: ApiEnrollmentCourse;
 };
 
+const PAGE_SIZE = 12;
+
 export default function EnrollmentManagement() {
   const queryClient = useQueryClient();
   const accessToken = useAuthStore((state) => state.user?.accessToken);
+  const [page, setPage] = useState(1);
   const [searchInput, setSearchInput] = useState("");
   const [keyword, setKeyword] = useState("");
   const [selectedUser, setSelectedUser] = useState<ApiUserSummary | null>(null);
@@ -48,9 +52,8 @@ export default function EnrollmentManagement() {
   } | null>(null);
 
   const usersQuery = useQuery({
-    queryKey: ["admin", "enrollment-users", keyword, DEFAULT_GROUP_ID],
-    queryFn: () => getUsers(keyword, DEFAULT_GROUP_ID),
-    enabled: keyword.length > 0,
+    queryKey: ["admin", "enrollment-users", page, keyword, DEFAULT_GROUP_ID],
+    queryFn: () => getUsersPaged(page, PAGE_SIZE, keyword, DEFAULT_GROUP_ID),
   });
 
   const username = selectedUser?.taiKhoan ?? "";
@@ -109,6 +112,7 @@ export default function EnrollmentManagement() {
 
   const handleSearch = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setPage(1);
     setKeyword(searchInput.trim());
     setSelectedUser(null);
     setFeedback(null);
@@ -130,6 +134,8 @@ export default function EnrollmentManagement() {
     unenrolledQuery.isPending ||
     pendingQuery.isPending ||
     approvedQuery.isPending;
+  const users = usersQuery.data?.items ?? [];
+  const totalPages = Math.max(usersQuery.data?.totalPages ?? 1, 1);
 
   return (
     <AdminPage>
@@ -162,14 +168,14 @@ export default function EnrollmentManagement() {
             Không thể tìm người dùng. Vui lòng thử lại.
           </p>
         ) : null}
-        {keyword && !usersQuery.isFetching && usersQuery.data?.length === 0 ? (
+        {keyword && !usersQuery.isFetching && users.length === 0 ? (
           <p className="mt-4 text-sm text-slate-500">
             Không tìm thấy người dùng phù hợp.
           </p>
         ) : null}
-        {usersQuery.data && usersQuery.data.length > 0 ? (
+        {users.length > 0 ? (
           <ul className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-            {usersQuery.data.slice(0, 12).map((user) => {
+            {users.map((user) => {
               const isSelected = selectedUser?.taiKhoan === user.taiKhoan;
               return (
                 <li key={user.taiKhoan}>
@@ -184,6 +190,20 @@ export default function EnrollmentManagement() {
               );
             })}
           </ul>
+        ) : null}
+        {totalPages > 1 ? (
+          <div className="mt-4 border-t border-slate-200 pt-4">
+            <PaginationControls
+              currentPage={page}
+              totalPages={totalPages}
+              isPending={usersQuery.isFetching}
+              onPageChange={(nextPage) => {
+                setPage(nextPage);
+                setSelectedUser(null);
+                setFeedback(null);
+              }}
+            />
+          </div>
         ) : null}
       </section>
 
