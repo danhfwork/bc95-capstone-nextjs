@@ -386,7 +386,7 @@ export default function AdminCourseForm({ courseId }: AdminCourseFormProps) {
               errors.description ? "description-error" : undefined
             }
             placeholder="Mô tả nội dung và mục tiêu của khóa học"
-            className="min-h-36 border-slate-300 bg-slate-50 text-base text-slate-950 placeholder:text-slate-400 focus-visible:border-blue-600 focus-visible:bg-white focus-visible:ring-blue-100 aria-invalid:border-red-500 aria-invalid:ring-red-100 md:text-sm"
+            className="field-sizing-fixed h-36 min-h-36 max-h-36 resize-none overflow-y-auto border-slate-300 bg-slate-50 text-base text-slate-950 placeholder:text-slate-400 focus-visible:border-blue-600 focus-visible:bg-white focus-visible:ring-blue-100 aria-invalid:border-red-500 aria-invalid:ring-red-100 md:text-sm"
             {...register("description")}
           />
           <FieldError

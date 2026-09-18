@@ -529,13 +529,22 @@ export const getUsers = async (
   return normalizeUserList(data);
 };
 
+function normalizeUserSearchKeyword(keyword: string): string {
+  return keyword
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\u0111/g, "d")
+    .replace(/\u0110/g, "D")
+    .trim();
+}
+
 export const getUsersPaged = async (
   page = 1,
   pageSize = 10,
   keyword = "",
   groupId = DEFAULT_GROUP_ID,
 ): Promise<ApiPaginatedResponse<ApiUserSummary>> => {
-  const normalizedKeyword = keyword.trim();
+  const normalizedKeyword = normalizeUserSearchKeyword(keyword);
   const { data } = await axiosClient.get<ApiPaginatedResponse<unknown>>(
     "/QuanLyNguoiDung/LayDanhSachNguoiDung_PhanTrang",
     {

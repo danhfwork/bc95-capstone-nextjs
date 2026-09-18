@@ -3,8 +3,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { BookOpen, Pencil, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { type FormEvent, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { type FormEvent, useEffect, useState } from "react";
 
 import { DEFAULT_GROUP_ID, deleteCourse, getCoursesPaged } from "@/app/lib/api";
 import { getApiErrorMessage } from "@/app/lib/errors";
@@ -28,9 +28,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 12;
 
 export default function CourseManagement() {
+  const router = useRouter();
   const queryClient = useQueryClient();
   const searchParams = useSearchParams();
   const accessToken = useAuthStore((state) => state.user?.accessToken);
@@ -40,6 +41,14 @@ export default function CourseManagement() {
   const [mutationError, setMutationError] = useState("");
   const [mutationSuccess, setMutationSuccess] = useState("");
   const status = searchParams.get("status");
+
+  useEffect(() => {
+    if (status !== "created" && status !== "updated") {
+      return;
+    }
+
+    router.replace("/admin/courses", { scroll: false });
+  }, [router, status]);
 
   const coursesQuery = useQuery({
     queryKey: ["admin", "courses", page, courseName, DEFAULT_GROUP_ID],

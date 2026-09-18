@@ -97,6 +97,7 @@ export default function ConfirmationDialog({
             disabled={isPending}
             className="h-11 w-full cursor-pointer border-red-600 bg-red-600 px-4 font-semibold text-white hover:bg-red-700 focus-visible:border-red-700 focus-visible:ring-2 focus-visible:ring-red-600/30 focus-visible:ring-offset-2 sm:w-auto"
             onClick={() => {
+              setIsOpen(false);
               void onConfirm();
             }}
           >
